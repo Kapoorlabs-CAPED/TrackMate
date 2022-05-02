@@ -363,12 +363,12 @@ public class CTCExporter
 		 * track.
 		 */
 		final Model model2 = sanitizeAndCopy( trackmate.getModel() );
-
+        
 		// What we need to decompose tracks in branches.
 		final TrackModel trackModel = model2.getTrackModel();
 		final TimeDirectedNeighborIndex neighborIndex = model2.getTrackModel().getDirectedNeighborIndex();
-
 		// Sanity check.
+		System.out.println(GraphUtils.isTree( trackModel, neighborIndex ));
 		if ( !GraphUtils.isTree( trackModel, neighborIndex ) )
 		{
 			final String msg = "Cannot perform CTC export of tracks that have fusion events.";

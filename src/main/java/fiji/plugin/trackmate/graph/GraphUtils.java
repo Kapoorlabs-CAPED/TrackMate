@@ -267,6 +267,7 @@ public class GraphUtils
 	{
 		for ( final Spot spot : spots )
 		{
+			System.out.println(spot.ID() + " " + cache.predecessorsOf( spot ).size());
 			if ( cache.predecessorsOf( spot ).size() > 1 )
 				return false;
 		}

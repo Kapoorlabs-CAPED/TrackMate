@@ -67,6 +67,7 @@ public class ModelTest {
 			model.getTrackModel().addEdge(s3, s4, 0);
 			model.getTrackModel().addEdge(s4, s5, 0);
 
+		
 			model.addSpotTo(s6, 0);
 			model.addSpotTo(s7, 1);
 			model.getTrackModel().addEdge(s6, s7, 0);

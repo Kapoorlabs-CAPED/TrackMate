@@ -282,9 +282,9 @@ public class LoadTrackMatePlugIn extends TrackMatePlugIn
 	{
 		ImageJ.main( args );
 		final LoadTrackMatePlugIn plugIn = new LoadTrackMatePlugIn();
-//		plugIn.run( "samples/FakeTracks.xml" );
+	//	plugIn.run( "samples/FakeTracks.xml" );
 //		plugIn.run( "samples/MAX_Merged.xml" );
-//		plugIn.run( "c:/Users/tinevez/Development/TrackMateWS/TrackMate-Cellpose/samples/R2_multiC.xml" );
+		plugIn.run( "c:/Users/rando/Downloads/Mari_project/Tracking/tracks_gt/Composite-2.xml");
 		plugIn.run( null );
 	}
 }
