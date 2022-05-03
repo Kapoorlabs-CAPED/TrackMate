@@ -65,7 +65,12 @@ public class OneatExporterPanel extends JPanel {
 
 	public OneatExporterPanel(final Settings settings, final Model model) {
 
-	
+		final GridBagLayout gridBagLayout = new GridBagLayout();
+		gridBagLayout.columnWidths = new int[] { 0, 0, 0 };
+		gridBagLayout.rowHeights = new int[] { 0, 0, 0, 0, 0 };
+		gridBagLayout.columnWeights = new double[] { 1.0, 1.0, Double.MIN_VALUE };
+		gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE };
+		setLayout( gridBagLayout );
 
 		final JLabel lblOneatModel = new JLabel("Oneat, a Keras based library for action events and static cell type classification, written by Varun Kapoor");
 		lblOneatModel.setFont(BIG_FONT);
@@ -78,6 +83,7 @@ public class OneatExporterPanel extends JPanel {
 
 		Loaddivisioncsvbutton = new JButton("Load Oneat division detections From CSV");
 
+		Loaddivisioncsvbutton.setHorizontalTextPosition(SwingConstants.LEFT);
 		Loaddivisioncsvbutton.setFont(SMALL_FONT);
 		final GridBagConstraints gbcLoadDivision = new GridBagConstraints();
 		gbcLoadDivision.anchor = GridBagConstraints.EAST;
@@ -87,6 +93,7 @@ public class OneatExporterPanel extends JPanel {
 		add(Loaddivisioncsvbutton, gbcLoadDivision);
 
 		Loadapoptosiscsvbutton = new JButton("Load Oneat apoptosis detections From CSV");
+		Loaddivisioncsvbutton.setHorizontalTextPosition(SwingConstants.LEFT);
 		Loaddivisioncsvbutton.setFont(SMALL_FONT);
 		final GridBagConstraints gbcLoadApoptosis = new GridBagConstraints();
 		gbcLoadApoptosis.anchor = GridBagConstraints.EAST;
