@@ -29,8 +29,8 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 	public static final String INFO_TEXT = "<html>"
 			+ "This action initiates Oneat track correction for the tracking results. "
 			+  "<p> "
-			+ "Oneat is an action classification software in python "
-			+ "which provides csv files of event locations such as mitosis/apoptosis "
+			+ "Oneat is a keras based library in python by Varun Kapoor. "
+			+ "It provides csv files of event locations such as mitosis/apoptosis "
 			+ "using the csv file of event locations the tracks are corrected "
 			+ "and a new trackscheme is generated with corrected tracks. "
 			+ "</html>";

@@ -66,135 +66,82 @@ public class OneatExporterPanel extends JPanel {
 	public OneatExporterPanel(final Settings settings, final Model model) {
 
 		final GridBagLayout gridBagLayout = new GridBagLayout();
-		gridBagLayout.columnWidths = new int[] { 0, 0, 0 };
-		gridBagLayout.rowHeights = new int[] { 0, 0, 0, 0, 0 };
-		gridBagLayout.columnWeights = new double[] { 1.0, 1.0, Double.MIN_VALUE };
-		gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE };
 		setLayout( gridBagLayout );
 
-		final JLabel lblOneatModel = new JLabel("Oneat, a Keras based library for action events and static cell type classification, written by Varun Kapoor");
-		lblOneatModel.setFont(BIG_FONT);
-		final GridBagConstraints gbcLblOneatModel = new GridBagConstraints();
-		gbcLblOneatModel.anchor = GridBagConstraints.EAST;
-		gbcLblOneatModel.insets = new Insets(0, 0, 0, 0);
-		gbcLblOneatModel.gridx = 0;
-		gbcLblOneatModel.gridy = 0;
-		add(lblOneatModel, gbcLblOneatModel);
+		final GridBagConstraints gbc = new GridBagConstraints();
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.insets = new Insets( 5, 5, 5, 5 );
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+
+
 
 		Loaddivisioncsvbutton = new JButton("Load Oneat division detections From CSV");
-
-		Loaddivisioncsvbutton.setHorizontalTextPosition(SwingConstants.LEFT);
-		Loaddivisioncsvbutton.setFont(SMALL_FONT);
-		final GridBagConstraints gbcLoadDivision = new GridBagConstraints();
-		gbcLoadDivision.anchor = GridBagConstraints.EAST;
-		gbcLoadDivision.insets = new Insets(0, 0, 0, 0);
-		gbcLoadDivision.gridx = 0;
-		gbcLoadDivision.gridy = 1;
-		add(Loaddivisioncsvbutton, gbcLoadDivision);
+		add(Loaddivisioncsvbutton, gbc);
+		gbc.gridy++;
 
 		Loadapoptosiscsvbutton = new JButton("Load Oneat apoptosis detections From CSV");
-		Loaddivisioncsvbutton.setHorizontalTextPosition(SwingConstants.LEFT);
-		Loaddivisioncsvbutton.setFont(SMALL_FONT);
-		final GridBagConstraints gbcLoadApoptosis = new GridBagConstraints();
-		gbcLoadApoptosis.anchor = GridBagConstraints.EAST;
-		gbcLoadDivision.insets = new Insets(0, 0, 0, 0);
-		gbcLoadApoptosis.gridx = 1;
-		gbcLoadApoptosis.gridy = 1;
-		add(Loadapoptosiscsvbutton, gbcLoadApoptosis);
-
+		add(Loadapoptosiscsvbutton, gbc);
+		gbc.gridy++;
+		
 		final JLabel lblDetectionChannel = new JLabel( "Integer label detection channel:" );
-		final GridBagConstraints gbc_lblDetectionChannel = new GridBagConstraints();
-		gbc_lblDetectionChannel.anchor = GridBagConstraints.EAST;
-		gbc_lblDetectionChannel.insets = new Insets( 0, 0, 5, 5 );
-		gbc_lblDetectionChannel.gridx = 0;
-		gbc_lblDetectionChannel.gridy = 3;
-		add( lblDetectionChannel, gbc_lblDetectionChannel );
+		add( lblDetectionChannel, gbc );
+		gbc.gridx++;
+		
 		
 		DetectionChannel = new JFormattedTextField(Integer.valueOf(2));
+		DetectionChannel.setColumns( 4 );
 		DetectionChannel.setFont(new Font("Arial", Font.PLAIN, 10));
-		final GridBagConstraints gbc_DetectionChannel = new GridBagConstraints();
-		gbc_DetectionChannel.insets = new Insets(0, 5, 5, 5);
-		gbc_DetectionChannel.fill = GridBagConstraints.BOTH;
-		gbc_DetectionChannel.gridx = 0;
-		gbc_DetectionChannel.gridy = 4;
-		add(DetectionChannel, gbc_DetectionChannel);
-		
+		add(DetectionChannel, gbc);
+		gbc.gridy++;
+		gbc.gridx--;
 		
 		final JLabel lblMinTracklet = new JLabel( "Minimum length of tracklet:" );
-		final GridBagConstraints gbc_lblMinTracklet = new GridBagConstraints();
-		gbc_lblMinTracklet.anchor = GridBagConstraints.EAST;
-		gbc_lblMinTracklet.insets = new Insets( 0, 0, 5, 5 );
-		gbc_lblMinTracklet.gridx = 0;
-		gbc_lblMinTracklet.gridy = 5;
-		add( lblMinTracklet, gbc_lblMinTracklet );
+		add( lblMinTracklet, gbc );
+		gbc.gridx++;
 		
 		MinTracklet = new JFormattedTextField(Integer.valueOf(2));
+		MinTracklet.setColumns( 4 );
 		MinTracklet.setFont(new Font("Arial", Font.PLAIN, 10));
-		final GridBagConstraints gbc_MinTracklet = new GridBagConstraints();
-		gbc_MinTracklet.insets = new Insets(0, 0, 5, 5);
-		gbc_MinTracklet.fill = GridBagConstraints.BOTH;
-		gbc_MinTracklet.gridx = 0;
-		gbc_MinTracklet.gridy = 6;
-		add(MinTracklet, gbc_MinTracklet);
-
+		add(MinTracklet, gbc);
+		
+		gbc.gridy++;
+		gbc.gridx--;
 		
 		final JLabel lblTimeGap = new JLabel( "Allowed timegap between oneat & TM events:" );
-		final GridBagConstraints gbc_lblTimeGap = new GridBagConstraints();
-		gbc_lblTimeGap.anchor = GridBagConstraints.EAST;
-		gbc_lblTimeGap.insets = new Insets( 0, 0, 5, 5 );
-		gbc_lblTimeGap.gridx = 0;
-		gbc_lblTimeGap.gridy = 7;
-		add( lblTimeGap, gbc_lblTimeGap );
+		add( lblTimeGap, gbc );
+		gbc.gridx++;
+		
 		
 		TimeGap = new JFormattedTextField(Integer.valueOf(2));
+		TimeGap.setColumns( 4 );
 		TimeGap.setFont(new Font("Arial", Font.PLAIN, 10));
-		final GridBagConstraints gbcTimeGap = new GridBagConstraints();
-		gbcTimeGap.insets = new Insets(0, 0, 5, 5);
-		gbcTimeGap.fill = GridBagConstraints.BOTH;
-		gbcTimeGap.gridx = 0;
-		gbcTimeGap.gridy = 8;
-		add(TimeGap, gbcTimeGap);
-
+		add(TimeGap, gbc);
+		gbc.gridy++;
+		gbc.gridx--;
 		
 		final JLabel lblMotherDaughterSizeRatio = new JLabel( "Max Size ratio daughter/mother cell:" );
-		final GridBagConstraints gbc_lblMotherDaughterSizeRatio = new GridBagConstraints();
-		gbc_lblMotherDaughterSizeRatio.anchor = GridBagConstraints.EAST;
-		gbc_lblMotherDaughterSizeRatio.insets = new Insets( 0, 0, 5, 5 );
-		gbc_lblMotherDaughterSizeRatio.gridx = 0;
-		gbc_lblMotherDaughterSizeRatio.gridy = 9;
-		add( lblMotherDaughterSizeRatio, gbc_lblMotherDaughterSizeRatio );
+		add( lblMotherDaughterSizeRatio, gbc );
+		gbc.gridx++;
 		
 		MotherDaughterSizeRatio = new JFormattedTextField(Double.valueOf(0.75));
 		MotherDaughterSizeRatio.setFont(new Font("Arial", Font.PLAIN, 10));
-		MotherDaughterSizeRatio.setColumns(5);
-		final GridBagConstraints gbc_MotherDaughterSizeRatio = new GridBagConstraints();
-		gbc_MotherDaughterSizeRatio.insets = new Insets(0, 0, 5, 5);
-		gbc_MotherDaughterSizeRatio.fill = GridBagConstraints.BOTH;
-		gbc_MotherDaughterSizeRatio.gridx = 0;
-		gbc_MotherDaughterSizeRatio.gridy = 10;
-		add(MotherDaughterSizeRatio, gbc_MotherDaughterSizeRatio);
-
+		MotherDaughterSizeRatio.setColumns(4);
+		add(MotherDaughterSizeRatio, gbc);
+		gbc.gridy++;
+		gbc.gridx--;
 		
 		
 		CreateNewLinks = new JCheckBox(" Create new mitosis events ");
 		CreateNewLinks.setHorizontalTextPosition(SwingConstants.LEFT);
 		CreateNewLinks.setFont(SMALL_FONT);
-		final GridBagConstraints gbcChckbxCreateNewLinks = new GridBagConstraints();
-		gbcChckbxCreateNewLinks.anchor = GridBagConstraints.EAST;
-		gbcChckbxCreateNewLinks.insets = new Insets(0, 0, 5, 5);
-		gbcChckbxCreateNewLinks.gridx = 0;
-		gbcChckbxCreateNewLinks.gridy = 11;
-		add(CreateNewLinks, gbcChckbxCreateNewLinks);
+		add(CreateNewLinks, gbc);
+		gbc.gridx++;
 
 		BreakCurrentLinks = new JCheckBox(" Break current mitosis events ");
 		BreakCurrentLinks.setHorizontalTextPosition(SwingConstants.LEFT);
 		BreakCurrentLinks.setFont(SMALL_FONT);
-		final GridBagConstraints gbcChckbxBreakCurrentLinks = new GridBagConstraints();
-		gbcChckbxBreakCurrentLinks.anchor = GridBagConstraints.EAST;
-		gbcChckbxBreakCurrentLinks.insets = new Insets(0, 0, 5, 5);
-		gbcChckbxBreakCurrentLinks.gridx = 1;
-		gbcChckbxBreakCurrentLinks.gridy = 11;
-		add(CreateNewLinks, gbcChckbxBreakCurrentLinks);
+		add(BreakCurrentLinks, gbc);
 
 		Loaddivisioncsvbutton.addActionListener(new ActionListener() {
 
