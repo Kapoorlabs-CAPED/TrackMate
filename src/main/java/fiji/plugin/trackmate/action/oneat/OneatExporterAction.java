@@ -8,7 +8,7 @@ import javax.swing.JOptionPane;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import static fiji.plugin.trackmate.gui.Icons.TRACKMATE_ICON;
 import org.scijava.plugin.Plugin;
-import static fiji.plugin.trackmate.gui.Icons.TRACK_ICON;
+import static fiji.plugin.trackmate.gui.Icons.CAMERA_ICON;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
@@ -66,7 +66,7 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 	}
 	
 	@Plugin( type = TrackMateActionFactory.class )
-	public static class Factory implements TrackMateActionFactory
+	public static class Factory < T extends RealType< T > & NativeType< T > > implements TrackMateActionFactory
 	{
 
 		@Override
@@ -84,13 +84,13 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 		@Override
 		public TrackMateAction create()
 		{
-			return new OneatExporterAction();
+			return new OneatExporterAction<T>();
 		}
 
 		@Override
 		public ImageIcon getIcon()
 		{
-			return TRACK_ICON;
+			return CAMERA_ICON;
 		}
 
 		@Override
