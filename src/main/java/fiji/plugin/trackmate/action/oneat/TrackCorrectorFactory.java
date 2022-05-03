@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.action;
+package fiji.plugin.trackmate.action.oneat;
 
 import java.util.Map;
 
@@ -28,7 +28,7 @@ import net.imglib2.type.numeric.integer.IntType;
  *
  * @param <T>
  */
-public interface TrackCorrectorFactory extends TrackMateModule
+public interface  TrackCorrectorFactory < T extends RealType< T > & NativeType< T > > extends TrackMateModule
  {
 
 	
@@ -46,7 +46,7 @@ public interface TrackCorrectorFactory extends TrackMateModule
 		 *            the settings map configuring the tracker.
 		 * @return a new {@link SpotTracker} instance.
 		 */
-		public TrackCorrector create(  ImgPlus< IntType > img,  Model model, final Map< String, Object > settings );
+		public TrackCorrector create(  ImgPlus< T > img,  Model model, final Map< String, Object > settings );
 
 		/**
 		 * Returns a new GUI panel able to configure the settings suitable for the

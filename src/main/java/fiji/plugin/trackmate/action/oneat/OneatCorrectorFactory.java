@@ -10,7 +10,7 @@ import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-
+import net.imglib2.util.Util;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 
@@ -20,14 +20,23 @@ import org.scijava.plugin.Plugin;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.action.TrackCorrector;
-import fiji.plugin.trackmate.action.TrackCorrectorFactory;
 import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
 import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
+import net.imagej.axis.AxisType;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.display.imagej.ImgPlusViews;
+import net.imglib2.loops.LoopBuilder;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.Type;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.view.Views;
 
 @Plugin( type = TrackCorrectorFactory.class, visible = true )
-public class OneatCorrectorFactory implements TrackCorrectorFactory {
+public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T > >implements TrackCorrectorFactory <T> {
 
 	
 	public static final String DIVISION_FILE = "Division_File";
@@ -47,6 +56,8 @@ public class OneatCorrectorFactory implements TrackCorrectorFactory {
     
     public static final String KEY_BREAK_LINKS = "BREAK_LINKS";
     
+    public static final String KEY_DETECTION_CHANNEL = "Detection_Channel";
+    
     protected ImgPlus< IntType > img;
 	
 	/** A default value for the {@value #DEFAULT_KEY_TRACKLET_LENGTH} parameter. */
@@ -54,6 +65,7 @@ public class OneatCorrectorFactory implements TrackCorrectorFactory {
 	public static final double DEFAULT_KEY_TIME_GAP = 10;
 	public static final double DEFAULT_SIZE_RATIO = 0.75;
 	public static final double DEFAULT_LINKING_DISTANCE = 75;
+	public static final int DEFAULT_DETECTION_CHANNEL = 2;
 	public static final boolean DEFAULT_CREATE_LINKS = true;
 	public static final boolean DEFAULT_BREAK_LINKS = false;
 	
@@ -95,7 +107,7 @@ public class OneatCorrectorFactory implements TrackCorrectorFactory {
 	
 
 	@Override
-	public TrackCorrector create(  ImgPlus< IntType > img,  Model model,
+	public   TrackCorrector  create(  ImgPlus< T > img,  Model model,
 			Map<String, Object> settings) {
 		
 		
@@ -107,6 +119,8 @@ public class OneatCorrectorFactory implements TrackCorrectorFactory {
 		  
 		  int timegap = (int) settings.get(KEY_TIME_GAP);
 		  
+		  int detectionchannel = (int) settings.get(KEY_DETECTION_CHANNEL);
+		  
 		  double sizeratio = (double) settings.get(KEY_SIZE_RATIO);
 		  
 		  double linkingdistance = (double) settings.get(KEY_LINKING_MAX_DISTANCE);
@@ -114,8 +128,20 @@ public class OneatCorrectorFactory implements TrackCorrectorFactory {
 		  final boolean createlinks = ( boolean ) settings.get( KEY_CREATE_LINKS );
 		  
 		  final boolean breaklinks = ( boolean ) settings.get( KEY_BREAK_LINKS );
-		
-		  return new OneatCorrector(oneatdivisionfile, oneatapoptosisfile, img, mintrackletlength, timegap, sizeratio, linkingdistance, createlinks, breaklinks, model, settings);
+		  
+		  ImgPlus <T> detectionimg = ImgPlusViews.hyperSlice( img, img.dimensionIndex( Axes.CHANNEL ), detectionchannel );
+		  AxisType[] axes = new AxisType[] {
+					Axes.X,
+					Axes.Y,
+					Axes.Z,
+					Axes.TIME };
+		  final ImgPlus< IntType > intimg = new ImgPlus<IntType>( Util.getArrayOrCellImgFactory( detectionimg, new IntType() ).create( detectionimg ), "lblimg", axes);
+			LoopBuilder
+					.setImages( Views.zeroMin( detectionimg ), intimg )
+					.multiThreaded( false )
+					.forEachPixel( ( i, o ) -> o.setReal( i.getRealDouble() ) );
+			
+		  return new OneatCorrector(oneatdivisionfile, oneatapoptosisfile, intimg, mintrackletlength, timegap, sizeratio, linkingdistance, createlinks, breaklinks, model, settings);
 	}
 
 	@Override

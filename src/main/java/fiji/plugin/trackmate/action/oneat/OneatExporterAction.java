@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.action.oneat;
 
 import java.awt.Frame;
+import java.util.Map;
 
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -19,13 +20,15 @@ import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
 import fiji.plugin.trackmate.util.TMUtils;
 import net.imagej.ImgPlus;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
-public class OneatExporterAction extends AbstractTMAction {
+public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > extends AbstractTMAction {
 
 	
 	public static final String INFO_TEXT = "<html>"
 			+ "This action initiates Oneat track correction for the tracking results. "
-			+ "<p> "
+			+  "<p> "
 			+ "Oneat is an action classification software in python "
 			+ "which provides csv files of event locations such as mitosis/apoptosis "
 			+ "using the csv file of event locations the tracks are corrected "
@@ -53,9 +56,9 @@ public class OneatExporterAction extends AbstractTMAction {
 			final int userInput = JOptionPane.showConfirmDialog(gui, panel, "Launch Oneat track corrector", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, TRACKMATE_ICON);
 			if ( userInput != JOptionPane.OK_OPTION )
 				return;
-			
-			final int channel = (int) panel.getSettings().get(KEY_TARGET_CHANNEL);
-			
+			Map<String, Object> mapsettings = panel.getSettings();
+			OneatCorrectorFactory<T> corrector = new OneatCorrectorFactory<T>();
+			corrector.create(img, model, mapsettings);
 		}
 		
 		
@@ -81,7 +84,7 @@ public class OneatExporterAction extends AbstractTMAction {
 		@Override
 		public TrackMateAction create()
 		{
-			return new CaptureOverlayAction();
+			return new OneatExporterAction();
 		}
 
 		@Override

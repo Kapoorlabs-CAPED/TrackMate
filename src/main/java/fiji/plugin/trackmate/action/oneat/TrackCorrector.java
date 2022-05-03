@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.action;
+package fiji.plugin.trackmate.action.oneat;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;

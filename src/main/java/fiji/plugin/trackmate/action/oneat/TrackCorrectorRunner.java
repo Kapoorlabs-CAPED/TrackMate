@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.action;
+package fiji.plugin.trackmate.action.oneat;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,7 +25,6 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackModel;
-import fiji.plugin.trackmate.action.oneat.Oneatobject;
 import fiji.plugin.trackmate.util.TMUtils;
 import net.imglib2.util.Util;
 import net.imagej.ImgPlus;
