@@ -119,7 +119,7 @@ public class OneatCorrectorFactory implements TrackCorrectorFactory {
 	@Override
 	public JPanel getTrackCorrectorConfigurationPanel(Settings settings, Model model) {
 		
-		return new TrackCorrectorPanel(settings, model);
+		return new OneatExporterPanel(settings, model);
 	}
 
 	@Override

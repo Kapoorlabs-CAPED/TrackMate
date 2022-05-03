@@ -46,7 +46,7 @@ import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_SIZE_RATIO;
 import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_CREATE_LINKS;
 import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_BREAK_LINKS;
 
-public class TrackCorrectorPanel extends JPanel {
+public class OneatExporterPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private static File oneatdivisionfile;
 	private static File oneatapoptosisfile;
@@ -61,7 +61,7 @@ public class TrackCorrectorPanel extends JPanel {
 	private JCheckBox CreateNewLinks;
 	private JCheckBox BreakCurrentLinks;
 
-	public TrackCorrectorPanel(final Settings settings, final Model model) {
+	public OneatExporterPanel(final Settings settings, final Model model) {
 
 		final GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] { 144, 0, 32 };

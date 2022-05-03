@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.action;
 import java.awt.Frame;
 
 import javax.swing.JOptionPane;
-
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import static fiji.plugin.trackmate.gui.Icons.TRACKMATE_ICON;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionModel;
@@ -42,11 +42,12 @@ public class OneatExporterAction extends AbstractTMAction {
 		{
 			
 			
-			final TrackCorrectorPanel panel = new TrackCorrectorPanel(settings, model);
+			final OneatExporterPanel panel = new OneatExporterPanel(settings, model);
 			final int userInput = JOptionPane.showConfirmDialog(gui, panel, "Launch Oneat track corrector", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, TRACKMATE_ICON);
 			if ( userInput != JOptionPane.OK_OPTION )
 				return;
 			
+			final int channel = (int) panel.getSettings().get(KEY_TARGET_CHANNEL);
 			
 		}
 		
