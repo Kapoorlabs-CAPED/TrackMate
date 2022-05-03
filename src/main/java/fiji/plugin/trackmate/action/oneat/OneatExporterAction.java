@@ -1,14 +1,21 @@
-package fiji.plugin.trackmate.action;
+package fiji.plugin.trackmate.action.oneat;
 
 import java.awt.Frame;
 
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import static fiji.plugin.trackmate.gui.Icons.TRACKMATE_ICON;
+import org.scijava.plugin.Plugin;
+import static fiji.plugin.trackmate.gui.Icons.TRACK_ICON;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.action.AbstractTMAction;
+import fiji.plugin.trackmate.action.CaptureOverlayAction;
+import fiji.plugin.trackmate.action.TrackMateAction;
+import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
 import fiji.plugin.trackmate.util.TMUtils;
 import net.imagej.ImgPlus;
@@ -53,6 +60,41 @@ public class OneatExporterAction extends AbstractTMAction {
 		
 		
 		
+	}
+	
+	@Plugin( type = TrackMateActionFactory.class )
+	public static class Factory implements TrackMateActionFactory
+	{
+
+		@Override
+		public String getInfoText()
+		{
+			return INFO_TEXT;
+		}
+
+		@Override
+		public String getKey()
+		{
+			return KEY;
+		}
+
+		@Override
+		public TrackMateAction create()
+		{
+			return new CaptureOverlayAction();
+		}
+
+		@Override
+		public ImageIcon getIcon()
+		{
+			return TRACK_ICON;
+		}
+
+		@Override
+		public String getName()
+		{
+			return NAME;
+		}
 	}
 
 }

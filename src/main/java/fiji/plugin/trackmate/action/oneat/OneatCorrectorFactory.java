@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.action;
+package fiji.plugin.trackmate.action.oneat;
 
 import static fiji.plugin.trackmate.io.IOUtils.readStringAttribute;
 import static fiji.plugin.trackmate.io.IOUtils.readIntegerAttribute;
@@ -20,6 +20,8 @@ import org.scijava.plugin.Plugin;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.action.TrackCorrector;
+import fiji.plugin.trackmate.action.TrackCorrectorFactory;
 import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
 import net.imagej.ImgPlus;
 import net.imglib2.type.numeric.integer.IntType;

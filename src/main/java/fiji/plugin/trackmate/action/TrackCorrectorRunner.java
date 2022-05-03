@@ -25,6 +25,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackModel;
+import fiji.plugin.trackmate.action.oneat.Oneatobject;
 import fiji.plugin.trackmate.util.TMUtils;
 import net.imglib2.util.Util;
 import net.imagej.ImgPlus;
@@ -42,11 +43,11 @@ import static fiji.plugin.trackmate.Spot.POSITION_Y;
 import static fiji.plugin.trackmate.Spot.POSITION_Z;
 import static fiji.plugin.trackmate.Spot.FRAME;
 import static fiji.plugin.trackmate.Spot.RADIUS;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_BREAK_LINKS;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_CREATE_LINKS;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_LINKING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_SIZE_RATIO;
 import static fiji.plugin.trackmate.Spot.QUALITY;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_SIZE_RATIO;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_LINKING_MAX_DISTANCE;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_CREATE_LINKS;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_BREAK_LINKS;
 
 public class TrackCorrectorRunner {
 

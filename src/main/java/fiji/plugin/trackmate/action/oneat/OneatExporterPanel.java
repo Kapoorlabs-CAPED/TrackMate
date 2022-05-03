@@ -1,5 +1,5 @@
 
-package fiji.plugin.trackmate.action;
+package fiji.plugin.trackmate.action.oneat;
 
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
 
@@ -36,15 +36,16 @@ import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
 import fiji.plugin.trackmate.util.TMUtils;
 import ij.ImageJ;
 import ij.plugin.PlugIn;
+
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.APOPTOSIS_FILE;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.DIVISION_FILE;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_BREAK_LINKS;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_CREATE_LINKS;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_SIZE_RATIO;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TIME_GAP;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TRACKLET_LENGTH;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.DIVISION_FILE;
 import static fiji.plugin.trackmate.gui.Fonts.SMALL_FONT;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.APOPTOSIS_FILE;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_TRACKLET_LENGTH;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_TIME_GAP;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_SIZE_RATIO;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_CREATE_LINKS;
-import static fiji.plugin.trackmate.action.OneatCorrectorFactory.KEY_BREAK_LINKS;
 
 public class OneatExporterPanel extends JPanel {
 	private static final long serialVersionUID = 1L;

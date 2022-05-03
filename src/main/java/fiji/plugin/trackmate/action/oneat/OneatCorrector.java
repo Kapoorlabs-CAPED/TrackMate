@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.action;
+package fiji.plugin.trackmate.action.oneat;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -13,6 +13,8 @@ import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.action.TrackCorrector;
+import fiji.plugin.trackmate.action.TrackCorrectorRunner;
 import net.imagej.ImgPlus;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.util.Pair;
