@@ -62,7 +62,7 @@ public class TrackCorrectorRunner {
 	
 	
 	public static SimpleWeightedGraph<Spot, DefaultWeightedEdge> getCorrectedTracks(final Model model, HashMap<Integer, Pair<ArrayList<Spot>, Spot>> Mitosisspots,
-			HashMap<Integer, Pair<ArrayList<Spot>, Spot>> Apoptosisspots, Map<String, Object> settings, final int ndim) {
+			HashMap<Integer, Pair<ArrayList<Spot>, Spot>> Apoptosisspots, Map<String, Object> settings, final int ndim, final Logger logger) {
 
 		
 		//Get the trackmodel and spots in the default tracking result and start to create a new graph
@@ -78,11 +78,13 @@ public class TrackCorrectorRunner {
 		Set<Integer> AlltrackIDs = trackmodel.trackIDs(false);
 		Set<Integer> MitosisIDs = new HashSet<Integer>();
 		Set<Integer> ApoptosisIDs = new HashSet<Integer>();
-		
-		if (Apoptosisspots!=null)
+		int count = 0;
+		if (Apoptosisspots!=null) {
+			
+			logger.log( "Verifying apoptosis.\n" );
 		//Lets take care of apoptosis
 		for (Map.Entry<Integer, Pair<ArrayList<Spot>, Spot>> trackidspots : Apoptosisspots.entrySet()) {
-			
+			 count++;
 			// Get the current trackID
 			int trackID = trackidspots.getKey();
 			Pair<ArrayList<Spot>, Spot> trackspots = trackidspots.getValue();
@@ -91,6 +93,7 @@ public class TrackCorrectorRunner {
 			// Apoptosis cell can not be source of an edge
 			for (Spot killerspot : trackspots.getA()) {
 				
+				logger.setProgress( ( float ) ( count ) / Apoptosisspots.size() );
 				Set<DefaultWeightedEdge> killertrack = trackmodel.trackEdges(trackID);
 				for ( final DefaultWeightedEdge edge : killertrack )
 				{
@@ -107,7 +110,11 @@ public class TrackCorrectorRunner {
 			
 		}
 		
+		}
+		
+		count = 0;
 		if(createlinks) {
+			logger.log( "Creating mitosis links.\n" );
 		// Lets take care of mitosis
 			if (Mitosisspots!=null) 	
 		for (Map.Entry<Integer, Pair<ArrayList<Spot>, Spot>> trackidspots : Mitosisspots.entrySet()) {
@@ -121,6 +128,7 @@ public class TrackCorrectorRunner {
 			Boolean acceptSeconddaughter = false;
 			for (Spot motherspot : trackspots.getA()) {
 
+				logger.setProgress( ( float ) ( count ) / Mitosisspots.size() );
 				// Get the location of spot in current frame
 				int currentframe = motherspot.getFeature(FRAME).intValue();
 				double mothersize = motherspot.getFeature(QUALITY);
@@ -335,7 +343,7 @@ public class TrackCorrectorRunner {
 			}
 		}
 		
-		logger.log( " Matching with oneat spots.\n" );
+		logger.log( "Matching with oneat spots.\n" );
 		logger.setProgress( 0. );
 		count = 0;
 		

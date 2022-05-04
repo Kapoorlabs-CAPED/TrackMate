@@ -41,11 +41,11 @@ public class OneatExporterPanel extends JPanel {
 	private static File oneatdivisionfile;
 	private  static File oneatapoptosisfile;
 
-	private  int detchannel;
-	private  double sizeratio;
-	private double linkdist;
-	private  int deltat;
-	private  int tracklet;
+	private  int detchannel = 1;
+	private  double sizeratio = 0.75;
+	private double linkdist = 50;
+	private  int deltat = 10;
+	private  int tracklet = 2;
 	private boolean createlinks = true;
 	private boolean breaklinks = false;
 	

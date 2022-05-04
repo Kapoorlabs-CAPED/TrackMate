@@ -169,7 +169,7 @@ public class OneatCorrector implements TrackCorrector {
         
         }
         
-			SimpleWeightedGraph<Spot, DefaultWeightedEdge> correctedgraph = TrackCorrectorRunner.getCorrectedTracks(model, Mitossisspots, Apoptosisspots, settings, ndims); 	
+			SimpleWeightedGraph<Spot, DefaultWeightedEdge> correctedgraph = TrackCorrectorRunner.getCorrectedTracks(model, Mitossisspots, Apoptosisspots, settings, ndims, logger); 	
 			
 			model.beginUpdate();
 			
