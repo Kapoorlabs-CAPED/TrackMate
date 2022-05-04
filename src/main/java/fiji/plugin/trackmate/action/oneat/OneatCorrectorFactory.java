@@ -56,18 +56,11 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
     
     public static final String KEY_BREAK_LINKS = "BREAK_LINKS";
     
-    public static final String KEY_DETECTION_CHANNEL = "Detection_Channel";
+    public static final String KEY_TARGET_CHANNEL = "Detection_Channel";
     
     protected ImgPlus< IntType > img;
 	
-	/** A default value for the {@value #DEFAULT_KEY_TRACKLET_LENGTH} parameter. */
-	public static final double DEFAULT_KEY_TRACKLET_LENGTH = 2;
-	public static final double DEFAULT_KEY_TIME_GAP = 10;
-	public static final double DEFAULT_SIZE_RATIO = 0.75;
-	public static final double DEFAULT_LINKING_DISTANCE = 75;
-	public static final int DEFAULT_DETECTION_CHANNEL = 2;
-	public static final boolean DEFAULT_CREATE_LINKS = true;
-	public static final boolean DEFAULT_BREAK_LINKS = false;
+
 	
 	public static final String THIS_TRACK_CORRECTOR = "Oneat_Corrector";
 
@@ -110,7 +103,7 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 	public   TrackCorrector  create(  ImgPlus< T > img,  Model model,
 			Map<String, Object> settings) {
 		
-		
+		 
 		  File oneatdivisionfile = (File) settings.get(DIVISION_FILE);
 		  
 		  File oneatapoptosisfile = (File) settings.get(APOPTOSIS_FILE);
@@ -118,8 +111,8 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 		  int mintrackletlength = (int) settings.get(KEY_TRACKLET_LENGTH);
 		  
 		  int timegap = (int) settings.get(KEY_TIME_GAP);
+		 
 		  
-		  int detectionchannel = (int) settings.get(KEY_DETECTION_CHANNEL);
 		  
 		  double sizeratio = (double) settings.get(KEY_SIZE_RATIO);
 		  
@@ -129,7 +122,16 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 		  
 		  final boolean breaklinks = ( boolean ) settings.get( KEY_BREAK_LINKS );
 		  
-		  ImgPlus <T> detectionimg = ImgPlusViews.hyperSlice( img, img.dimensionIndex( Axes.CHANNEL ), detectionchannel );
+		  
+		  
+		  System.out.println(oneatdivisionfile + " " + oneatapoptosisfile + " " + mintrackletlength + " " + timegap );
+		  int detectionchannel = (int) settings.get(KEY_TARGET_CHANNEL);
+		  assert detectionchannel <= img.numDimensions(): "Channel can not exceed the image dimension";
+		  System.out.println(img.dimensionIndex(Axes.CHANNEL) + " " +  img.dimensionIndex(Axes.TIME) + " " +  img.dimensionIndex(Axes.X) + " " +  img.dimensionIndex(Axes.Y) + " " + img.dimensionIndex(Axes.Z));
+		  ImgPlus <T> detectionimg =  img;
+		  if (img.dimensionIndex(Axes.CHANNEL) > 0) 
+		     detectionimg = ImgPlusViews.hyperSlice( img, img.dimensionIndex( Axes.CHANNEL ), (int) detectionchannel );
+		 
 		  AxisType[] axes = new AxisType[] {
 					Axes.X,
 					Axes.Y,
@@ -141,13 +143,15 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 					.multiThreaded( false )
 					.forEachPixel( ( i, o ) -> o.setReal( i.getRealDouble() ) );
 			
-		  return new OneatCorrector(oneatdivisionfile, oneatapoptosisfile, intimg, mintrackletlength, timegap, sizeratio, linkingdistance, createlinks, breaklinks, model, settings);
+		  return new OneatCorrector(oneatdivisionfile, oneatapoptosisfile, intimg, (int) mintrackletlength, (int) timegap, sizeratio, linkingdistance, createlinks, breaklinks, model, settings);
 	}
 
 	@Override
-	public JPanel getTrackCorrectorConfigurationPanel(Settings settings, Model model) {
+	public JPanel getTrackCorrectorConfigurationPanel(Settings settings, Model model, int detchannel, int sizeratio, double linkdist, int deltat,
+			int tracklet, boolean createlinks, boolean breaklinks) {
 		
-		return new OneatExporterPanel(settings, model);
+		return new OneatExporterPanel(settings, model,  detchannel,  sizeratio,  linkdist,  deltat,
+				 tracklet,  createlinks,  breaklinks);
 	}
 
 	@Override
@@ -162,7 +166,7 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 		ok = ok & writeAttribute( settings, element, KEY_LINKING_MAX_DISTANCE, Double.class, str );
 		ok = ok & writeAttribute( settings, element, KEY_CREATE_LINKS, Boolean.class, str );
 		ok = ok & writeAttribute( settings, element, KEY_BREAK_LINKS, Boolean.class, str );
-		
+		ok = ok & writeAttribute( settings, element, KEY_TARGET_CHANNEL, Integer.class, str );
 		return ok;
 	}
 
@@ -179,6 +183,7 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 		ok = ok & readDoubleAttribute( element, settings, KEY_LINKING_MAX_DISTANCE, errorHolder );
 		ok = ok & readBooleanAttribute( element, settings, KEY_CREATE_LINKS, errorHolder );
 		ok = ok & readBooleanAttribute( element, settings, KEY_BREAK_LINKS, errorHolder );
+		ok = ok & readBooleanAttribute( element, settings, KEY_TARGET_CHANNEL, errorHolder );
 		return ok;
 	}
 
@@ -203,6 +208,8 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 		
 		final String breaklinks  = (String) settings.get(KEY_BREAK_LINKS);
 		
+		final String detectionchannel = (String) settings.get(KEY_TARGET_CHANNEL);
+		
 		final StringBuilder str = new StringBuilder();
 
 		str.append( String.format( "  - oneat division detection file: %.1f\n", oneatdivisionfile));
@@ -213,21 +220,10 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 		str.append( String.format( "  - Max linking distance to consider for making links: %.1f\n", linkingdistance));
 		str.append( String.format( "  -Create new links: %.1f\n", createlinks));
 		str.append( String.format( "  - Breal links: %.1f\n", breaklinks));
+		str.append( String.format( "  - Detection Channel: %.1f\n", detectionchannel));
 		
 		
 		return str.toString();
-	}
-
-	@Override
-	public Map<String, Object> getDefaultSettings() {
-		final Map< String, Object > sm = new HashMap<>( 6 );
-		sm.put( KEY_TRACKLET_LENGTH, DEFAULT_KEY_TRACKLET_LENGTH );
-		sm.put( KEY_TIME_GAP, DEFAULT_KEY_TIME_GAP );
-		sm.put( KEY_SIZE_RATIO, DEFAULT_SIZE_RATIO );
-		sm.put( KEY_LINKING_MAX_DISTANCE, DEFAULT_LINKING_DISTANCE );
-		sm.put(KEY_BREAK_LINKS, DEFAULT_BREAK_LINKS);
-		sm.put(KEY_CREATE_LINKS, DEFAULT_CREATE_LINKS);
-		return sm;
 	}
 
 	@Override
@@ -257,6 +253,8 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 		
 		ok = ok & checkParameter( settings, KEY_BREAK_LINKS, Boolean.class, str );
 		
+		ok = ok & checkParameter( settings, KEY_TARGET_CHANNEL, Integer.class, str );
+		
 
 		if ( !ok )
 		{
@@ -271,8 +269,8 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 	}
 
 	@Override
-	public OneatCorrectorFactory copy() {
-		return new OneatCorrectorFactory();
+	public OneatCorrectorFactory<T> copy() {
+		return new OneatCorrectorFactory<T>();
 	}
 
 

@@ -1,11 +1,23 @@
 package fiji.plugin.trackmate.action.oneat;
 
 import java.awt.Frame;
+import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
+
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.APOPTOSIS_FILE;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.DIVISION_FILE;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_BREAK_LINKS;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_CREATE_LINKS;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_SIZE_RATIO;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TIME_GAP;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TRACKLET_LENGTH;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_LINKING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TARGET_CHANNEL;
+
 import static fiji.plugin.trackmate.gui.Icons.TRACKMATE_ICON;
 import org.scijava.plugin.Plugin;
 import static fiji.plugin.trackmate.gui.Icons.CAMERA_ICON;
@@ -39,6 +51,19 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 
 	public static final String NAME = "Launch Oneat track corrector";
 	
+	private static int detchannel = -1;
+	
+	private double sizeratio = -1;
+	
+	private double linkdist = -1;
+	
+	private int deltat = -1;
+	
+	private int tracklet = -1;
+	
+	private boolean createlinks = false;
+	
+	private boolean breaklinks = true;
 	
 	@Override
 	public void execute(TrackMate trackmate, SelectionModel selectionModel, DisplaySettings displaySettings,
@@ -46,23 +71,50 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 		
 		Settings settings = trackmate.getSettings();
 		Model model = trackmate.getModel();
-		final ImgPlus img = TMUtils.rawWraps( settings.imp );
+		final ImgPlus<T> img = TMUtils.rawWraps( settings.imp );
 		
 		if (gui!=null)
 		{
 			
 			
-			final OneatExporterPanel panel = new OneatExporterPanel(settings, model);
+			final OneatExporterPanel panel = new OneatExporterPanel(settings, model, detchannel,  sizeratio,  linkdist,  deltat,
+					 tracklet,  createlinks,  breaklinks);
 			final int userInput = JOptionPane.showConfirmDialog(gui, panel, "Launch Oneat track corrector", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, TRACKMATE_ICON);
 			if ( userInput != JOptionPane.OK_OPTION )
 				return;
-			Map<String, Object> mapsettings = panel.getSettings();
+			
+			File oneatdivisionfile = panel.getMistosisFile();
+			File oneatapotosisfile = panel.getApoptosisFile();
+			int tracklet = panel.getMinTracklet();
+			int deltat = panel.getTimeGap();
+			double sizeratio = panel.getSizeRatio();
+			boolean breaklinks = panel.getBreakLinks();
+			boolean createlinks = panel.getCreateLinks();
+			int detchannel = panel.getDetectionChannel();
+			double linkdist = panel.getLinkDist();
+			Map<String, Object> mapsettings = getSettings(oneatdivisionfile,oneatapotosisfile,tracklet,deltat,sizeratio,breaklinks,createlinks,detchannel,linkdist );
 			OneatCorrectorFactory<T> corrector = new OneatCorrectorFactory<T>();
 			corrector.create(img, model, mapsettings);
 		}
 		
 		
 		
+	}
+	
+	public Map<String, Object> getSettings(File oneatdivisionfile, File oneatapoptosisfile, int tracklet, int deltat, double sizeratio, boolean breaklinks, boolean createlinks, int detchannel, double linkdist  ) {
+		final Map<String, Object> settings = new HashMap<>();
+
+		settings.put(DIVISION_FILE, oneatdivisionfile);
+		settings.put(APOPTOSIS_FILE, oneatapoptosisfile);
+		settings.put(KEY_TRACKLET_LENGTH, tracklet);
+		settings.put(KEY_TIME_GAP, deltat);
+		settings.put(KEY_SIZE_RATIO, sizeratio);
+		settings.put(KEY_BREAK_LINKS, breaklinks);
+		settings.put(KEY_CREATE_LINKS, createlinks);
+		settings.put(KEY_TARGET_CHANNEL, detchannel);
+		settings.put(KEY_LINKING_MAX_DISTANCE, linkdist);
+
+		return settings;
 	}
 	
 	@Plugin( type = TrackMateActionFactory.class )

@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.action.oneat;
 
+import java.io.File;
 import java.util.Map;
 
 import javax.swing.JPanel;
@@ -56,7 +57,8 @@ public interface  TrackCorrectorFactory < T extends RealType< T > & NativeType< 
 		 *            the model that will be modified by the target tracker.
 		 * @return a new configuration panel.
 		 */
-		public JPanel getTrackCorrectorConfigurationPanel(final Settings settings, final Model model );
+		public JPanel getTrackCorrectorConfigurationPanel(final Settings settings, final Model model, int detchannel, int sizeratio, double linkdist, int deltat,
+				int tracklet, boolean createlinks, boolean breaklinks );
 
 		/**
 		 * Marshalls a settings map to a JDom element, ready for saving to XML. The
@@ -99,13 +101,7 @@ public interface  TrackCorrectorFactory < T extends RealType< T > & NativeType< 
 		 */
 		public String toString( final Map< String, Object > sm );
 
-		/**
-		 * Returns a new default settings map suitable for the tracker Settings are
-		 * instantiated with default values. is returned.
-		 *
-		 * @return a settings map.
-		 */
-		public Map< String, Object > getDefaultSettings();
+
 
 		/**
 		 * Checks the validity of the given settings map for the tracker. The

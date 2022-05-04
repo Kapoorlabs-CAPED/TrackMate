@@ -21,50 +21,56 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
-import org.scijava.prefs.PrefService;
 
-import fiji.plugin.trackmate.LoadTrackMatePlugIn;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
-import fiji.plugin.trackmate.util.TMUtils;
-import ij.ImageJ;
-import ij.plugin.PlugIn;
 
-import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.APOPTOSIS_FILE;
-import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.DIVISION_FILE;
-import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_BREAK_LINKS;
-import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_CREATE_LINKS;
-import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_SIZE_RATIO;
-import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TIME_GAP;
-import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TRACKLET_LENGTH;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
+
+
 import static fiji.plugin.trackmate.gui.Fonts.SMALL_FONT;
-import static fiji.plugin.trackmate.gui.Fonts.BIG_FONT;;
 
 public class OneatExporterPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private static File oneatdivisionfile;
-	private static File oneatapoptosisfile;
+	private  static File oneatapoptosisfile;
 
+	private  int detchannel;
+	private  double sizeratio;
+	private double linkdist;
+	private  int deltat;
+	private  int tracklet;
+	private boolean createlinks;
+	private boolean breaklinks;
+	
 	private JButton Loaddivisioncsvbutton;
 	private JButton Loadapoptosiscsvbutton;
 	private JFormattedTextField MinTracklet;
 	private JFormattedTextField DetectionChannel;
 	private JFormattedTextField TimeGap;
 	private JFormattedTextField MotherDaughterSizeRatio;
+	private JFormattedTextField MotherDaughterLinkDist;
 
 	private JCheckBox CreateNewLinks;
 	private JCheckBox BreakCurrentLinks;
+	
+	public OneatExporterPanel(final Settings settings, final Model model, final int detchannel, final double sizeratio, final double linkdist, final int deltat,
+			final int tracklet, final boolean createlinks, final boolean breaklinks) {
 
-	public OneatExporterPanel(final Settings settings, final Model model) {
-
+		this.detchannel = detchannel;
+		this.sizeratio = sizeratio;
+		this.linkdist = linkdist;
+		this.deltat = deltat;
+		this.tracklet = tracklet;
+		this.createlinks = createlinks;
+		this.breaklinks = breaklinks;
+		
+		
+		
 		final GridBagLayout gridBagLayout = new GridBagLayout();
 		setLayout( gridBagLayout );
 
@@ -76,7 +82,7 @@ public class OneatExporterPanel extends JPanel {
 
 
 
-		Loaddivisioncsvbutton = new JButton("Load Oneat division detections From CSV");
+		Loaddivisioncsvbutton = new JButton("Load Oneat mitosis detections From CSV");
 		add(Loaddivisioncsvbutton, gbc);
 		gbc.gridy++;
 
@@ -89,7 +95,8 @@ public class OneatExporterPanel extends JPanel {
 		gbc.gridx++;
 		
 		
-		DetectionChannel = new JFormattedTextField(Integer.valueOf(2));
+		DetectionChannel = new JFormattedTextField();
+		DetectionChannel.setValue(0);
 		DetectionChannel.setColumns( 4 );
 		DetectionChannel.setFont(new Font("Arial", Font.PLAIN, 10));
 		add(DetectionChannel, gbc);
@@ -100,7 +107,8 @@ public class OneatExporterPanel extends JPanel {
 		add( lblMinTracklet, gbc );
 		gbc.gridx++;
 		
-		MinTracklet = new JFormattedTextField(Integer.valueOf(2));
+		MinTracklet = new JFormattedTextField();
+		MinTracklet.setValue(2);
 		MinTracklet.setColumns( 4 );
 		MinTracklet.setFont(new Font("Arial", Font.PLAIN, 10));
 		add(MinTracklet, gbc);
@@ -113,7 +121,8 @@ public class OneatExporterPanel extends JPanel {
 		gbc.gridx++;
 		
 		
-		TimeGap = new JFormattedTextField(Integer.valueOf(2));
+		TimeGap = new JFormattedTextField();
+		TimeGap.setValue(10);
 		TimeGap.setColumns( 4 );
 		TimeGap.setFont(new Font("Arial", Font.PLAIN, 10));
 		add(TimeGap, gbc);
@@ -124,21 +133,33 @@ public class OneatExporterPanel extends JPanel {
 		add( lblMotherDaughterSizeRatio, gbc );
 		gbc.gridx++;
 		
-		MotherDaughterSizeRatio = new JFormattedTextField(Double.valueOf(0.75));
+		MotherDaughterSizeRatio = new JFormattedTextField();
+		MotherDaughterSizeRatio.setValue(0.75);
 		MotherDaughterSizeRatio.setFont(new Font("Arial", Font.PLAIN, 10));
 		MotherDaughterSizeRatio.setColumns(4);
 		add(MotherDaughterSizeRatio, gbc);
 		gbc.gridy++;
 		gbc.gridx--;
 		
+		final JLabel lblMotherDaughterLinkDist = new JLabel( "Linking distance between mother/daughter:" );
+		add( lblMotherDaughterLinkDist, gbc );
+		gbc.gridx++;
 		
-		CreateNewLinks = new JCheckBox(" Create new mitosis events ");
+		MotherDaughterLinkDist = new JFormattedTextField();
+		MotherDaughterLinkDist.setValue(50);
+		MotherDaughterLinkDist.setFont(new Font("Arial", Font.PLAIN, 10));
+		MotherDaughterLinkDist.setColumns(4);
+		add(MotherDaughterLinkDist, gbc);
+		gbc.gridy++;
+		gbc.gridx--;
+		
+		CreateNewLinks = new JCheckBox("Create new mitosis events (Verified by oneat, missed by TM) ");
 		CreateNewLinks.setHorizontalTextPosition(SwingConstants.LEFT);
 		CreateNewLinks.setFont(SMALL_FONT);
 		add(CreateNewLinks, gbc);
 		gbc.gridx++;
 
-		BreakCurrentLinks = new JCheckBox(" Break current mitosis events ");
+		BreakCurrentLinks = new JCheckBox("Break current mitosis events (Labelled by TM, Unverfied by oneat ) ");
 		BreakCurrentLinks.setHorizontalTextPosition(SwingConstants.LEFT);
 		BreakCurrentLinks.setFont(SMALL_FONT);
 		add(BreakCurrentLinks, gbc);
@@ -214,31 +235,70 @@ public class OneatExporterPanel extends JPanel {
 			}
 
 		});
-
+		
+		DetectionChannel.addPropertyChangeListener( "value", ( e ) -> this.detchannel = ( ( Number ) DetectionChannel.getValue() ).intValue() );
+		MotherDaughterSizeRatio.addPropertyChangeListener( "value", ( e ) -> this.sizeratio = ( ( Number ) MotherDaughterSizeRatio.getValue() ).doubleValue() );
+		CreateNewLinks.addPropertyChangeListener( "value", ( e ) -> this.createlinks = CreateNewLinks.isSelected() );
+		BreakCurrentLinks.addPropertyChangeListener( "value", ( e ) -> this.breaklinks = BreakCurrentLinks.isSelected() );
+		MinTracklet.addPropertyChangeListener( "value", ( e ) -> this.tracklet = ((Number) MinTracklet.getValue()).intValue() );
+		TimeGap.addPropertyChangeListener( "value", ( e ) -> this.deltat = ((Number) TimeGap.getValue()).intValue() );
+		MotherDaughterLinkDist.addPropertyChangeListener( "value", ( e ) -> this.linkdist = ( ( Number ) MotherDaughterLinkDist.getValue() ).doubleValue() );
+		
 	}
 
-	public void setSettings(final Map<String, Object> settings) {
-		MinTracklet.setValue(settings.get(KEY_TRACKLET_LENGTH));
-		DetectionChannel.setValue(settings.get(KEY_TARGET_CHANNEL));
-		TimeGap.setValue(settings.get(KEY_TIME_GAP));
-		MotherDaughterSizeRatio.setValue(settings.get(KEY_SIZE_RATIO));
-		CreateNewLinks.setSelected((boolean) settings.get(KEY_CREATE_LINKS));
-		BreakCurrentLinks.setSelected((boolean) settings.get(KEY_BREAK_LINKS));
+	public double getLinkDist() {
+		
+		
+		return linkdist;
 	}
-
-	public Map<String, Object> getSettings() {
-		final Map<String, Object> settings = new HashMap<>();
-
-		settings.put(DIVISION_FILE, oneatdivisionfile);
-		settings.put(APOPTOSIS_FILE, oneatapoptosisfile);
-		settings.put(KEY_TRACKLET_LENGTH, ((Number) MinTracklet.getValue()).doubleValue());
-		settings.put(KEY_TIME_GAP, ((Number) TimeGap.getValue()).doubleValue());
-		settings.put(KEY_SIZE_RATIO, ((Number) MotherDaughterSizeRatio.getValue()).doubleValue());
-		settings.put(KEY_BREAK_LINKS, BreakCurrentLinks.isSelected());
-		settings.put(KEY_CREATE_LINKS, CreateNewLinks.isSelected());
-		settings.put(KEY_TARGET_CHANNEL, ((Number) DetectionChannel.getValue()).doubleValue());
-
-		return settings;
+	
+	
+	public int getDetectionChannel() {
+		
+		
+		return detchannel;
 	}
+	
+	public double getSizeRatio() {
+		
+		
+		return sizeratio;
+	}
+	
+	public int getMinTracklet() {
+		
+		return tracklet;
+	}
+	
+	public boolean getBreakLinks() {
+		
+		return breaklinks;
+	}
+	
+	public boolean getCreateLinks() {
+		
+		return createlinks;
+	}
+	
+	public int getTimeGap() {
+		
+		return deltat;
+	}
+	
+	public File getMistosisFile() {
+		
+		
+		return oneatdivisionfile;
+	}
+	 
+	
+	public File getApoptosisFile() {
+		
+		return oneatapoptosisfile;
+	}
+	
+
+
+
 
 }
