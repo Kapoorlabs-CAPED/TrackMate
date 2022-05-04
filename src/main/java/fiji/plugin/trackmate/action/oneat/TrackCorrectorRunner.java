@@ -300,6 +300,38 @@ public class TrackCorrectorRunner {
 		int ndim = intimg.numDimensions() - 1;
 		
 		RandomAccess<IntType> ranac = intimg.randomAccess();
+		
+		
+		Set<Integer> AllTrackIds = model.getTrackModel().trackIDs(false);
+		HashMap<String, Pair<Spot, Integer>> uniquelabelID = new HashMap<String, Pair<Spot, Integer>>(); 
+		
+		
+		for(int trackID: AllTrackIds) {
+			
+			Set<Spot> trackspots = model.getTrackModel().trackSpots(trackID);
+			
+			for(Spot spot: trackspots) {
+				
+				int time = spot.getFeature(FRAME).intValue();
+				long[] location = new long[ndim];
+				long[] timelocation = new long[ndim + 1];
+				for (int d = 0; d < ndim; ++d) {
+					location[d] = (long) spot.getDoublePosition(d);
+					timelocation[d] = location[d];
+				}
+				timelocation[ndim] = time;
+				ranac.setPosition(timelocation);
+				int label = ranac.get().get();
+				
+				String uniqueID = Integer.toString(label) + Integer.toString(time);
+				uniquelabelID.put(uniqueID, new ValuePair<Spot, Integer> (spot, trackID));
+				
+			}
+			
+		}
+		
+		
+		
 		for (Map.Entry<Integer, ArrayList<Spot>> framemap : framespots.entrySet()) {
 
 			int frame = framemap.getKey();
@@ -322,28 +354,14 @@ public class TrackCorrectorRunner {
 				// Get the label ID of the current interesting spot
 				int labelID = ranac.get().get();
 
+				String uniqueID = Integer.toString(labelID) + Integer.toString(frame);
+				
+				Pair<Spot, Integer> spotandtrackID = uniquelabelID.get(uniqueID);
 				// Now get the spot ID
 
-				final Iterable<Spot> spotsIt = allspots.iterable(frame, false);
-				for (final Spot spot : spotsIt) {
+				Spot spot = spotandtrackID.getA();
 
-					// Now we have all the spots in this frame that are a part of the track
-
-					long[] currentlocation = new long[ndim];
-					long[] currenttimelocation = new long[ndim + 1];
-					for (int d = 0; d < ndim; ++d) {
-						currentlocation[d] = (long) spot.getDoublePosition(d);
-						currenttimelocation[d] = currentlocation[d];
-						System.out.println("trackmate" + currenttimelocation[d] + " " +  frame);
-					}
-					currenttimelocation[ndim] = frame;
-					ranac.setPosition(currenttimelocation);
-
-					int spotlabelID = ranac.get().get();
-
-					if (spotlabelID == labelID &&  model.getTrackModel().trackIDOf(spot)!=null ) {
-
-						int trackID = model.getTrackModel().trackIDOf(spot);
+						int trackID = spotandtrackID.getB();
 						Pair<Boolean, Pair<Spot, Spot>> isDividingTMspot = isDividingTrack(spot, trackID, timegap,
 								model);
 						Boolean isDividing = isDividingTMspot.getA();
@@ -399,9 +417,9 @@ public class TrackCorrectorRunner {
 				}
 
 			}
-			}
+			
 
-		}
+		
 
 		
 		return TrackIDstartspots;
