@@ -93,7 +93,7 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 	
 
 	@Override
-	public   TrackCorrector  create(  ImgPlus< T > img,  Model model,
+	public   OneatCorrector  create(  ImgPlus< T > img,  Model model,
 			Map<String, Object> settings) {
 		
 		 

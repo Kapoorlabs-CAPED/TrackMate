@@ -96,7 +96,9 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 			System.out.println(breaklinks + " " +  createlinks);
 			Map<String, Object> mapsettings = getSettings(oneatdivisionfile,oneatapotosisfile,tracklet,deltat,sizeratio,breaklinks,createlinks,detchannel,linkdist );
 			OneatCorrectorFactory<T> corrector = new OneatCorrectorFactory<T>();
-			corrector.create(img, model, mapsettings);
+			OneatCorrector oneatcorrector = corrector.create(img, model, mapsettings);
+			oneatcorrector.checkInput();
+			oneatcorrector.process();
 		}
 		
 		
