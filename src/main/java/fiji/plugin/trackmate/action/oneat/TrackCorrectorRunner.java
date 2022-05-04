@@ -29,14 +29,19 @@ import fiji.plugin.trackmate.util.TMUtils;
 import net.imglib2.util.Util;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
+import net.imagej.axis.AxisType;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RealPoint;
+import net.imglib2.img.display.imagej.ImgPlusViews;
+import net.imglib2.loops.LoopBuilder;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
+import net.imglib2.view.Views;
+
 import static fiji.plugin.trackmate.Spot.POSITION_X;
 import static fiji.plugin.trackmate.Spot.POSITION_Y;
 import static fiji.plugin.trackmate.Spot.POSITION_Z;
@@ -73,7 +78,7 @@ public class TrackCorrectorRunner {
 		Set<Integer> MitosisIDs = new HashSet<Integer>();
 		Set<Integer> ApoptosisIDs = new HashSet<Integer>();
 		
-		
+		if (Apoptosisspots.size() > 0)
 		//Lets take care of apoptosis
 		for (Map.Entry<Integer, Pair<ArrayList<Spot>, Spot>> trackidspots : Apoptosisspots.entrySet()) {
 			
@@ -103,6 +108,7 @@ public class TrackCorrectorRunner {
 		
 		if(createlinks) {
 		// Lets take care of mitosis
+			if (Mitosisspots.size() > 0) 	
 		for (Map.Entry<Integer, Pair<ArrayList<Spot>, Spot>> trackidspots : Mitosisspots.entrySet()) {
 
 			// Get the current trackID
@@ -281,30 +287,38 @@ public class TrackCorrectorRunner {
 
 	}
 	
-	public static HashMap<Integer, Pair<ArrayList<Spot>, Spot>> getTrackID(final Model model,
-			final ImgPlus<IntType> img, HashMap<Integer, ArrayList<Spot>> framespots, final boolean checkdivision,
-			final int timegap) {
+	public static < T extends RealType< T > & NativeType< T > > HashMap<Integer, Pair<ArrayList<Spot>, Spot>> getTrackID(final Model model,
+			final ImgPlus<IntType> intimg, HashMap<Integer, ArrayList<Spot>> framespots, final boolean checkdivision,
+			final int timegap, final int detectionchannel) {
 
 		HashMap<Integer, ArrayList<Spot>> Mitosisspots = new HashMap<Integer, ArrayList<Spot>>();
 		HashMap<Integer, Pair<ArrayList<Spot>, Spot>> TrackIDstartspots = new HashMap<Integer, Pair<ArrayList<Spot>, Spot>>();
 		// Spots from trackmate
 		SpotCollection allspots = model.getSpots();
-
-		int ndim = img.numDimensions();
-		RandomAccess<IntType> ranac = img.randomAccess();
+		
+			
+		int ndim = intimg.numDimensions() - 1;
+		
+		RandomAccess<IntType> ranac = intimg.randomAccess();
 		for (Map.Entry<Integer, ArrayList<Spot>> framemap : framespots.entrySet()) {
 
 			int frame = framemap.getKey();
+			if (frame < intimg.dimension(ndim)) {
+				
+				
 			ArrayList<Spot> spotlist = framemap.getValue();
 
 			for (Spot currentspots : spotlist) {
 
 				long[] location = new long[ndim];
-				for (int d = 0; d < ndim; ++d)
+				long[] timelocation = new long[ndim + 1];
+				for (int d = 0; d < ndim; ++d) {
 					location[d] = (long) currentspots.getDoublePosition(d);
-
-				ranac.setPosition(frame, img.dimensionIndex(Axes.TIME));
-				ranac.setPosition(location);
+					timelocation[d] = location[d];
+                    System.out.println( "oneat" + timelocation[d] + " " +  frame);
+				}
+				timelocation[ndim] = frame;
+				ranac.setPosition(timelocation);
 				// Get the label ID of the current interesting spot
 				int labelID = ranac.get().get();
 
@@ -316,14 +330,18 @@ public class TrackCorrectorRunner {
 					// Now we have all the spots in this frame that are a part of the track
 
 					long[] currentlocation = new long[ndim];
-					for (int d = 0; d < ndim; ++d)
+					long[] currenttimelocation = new long[ndim + 1];
+					for (int d = 0; d < ndim; ++d) {
 						currentlocation[d] = (long) spot.getDoublePosition(d);
-
-					ranac.setPosition(currentlocation);
+						currenttimelocation[d] = currentlocation[d];
+						System.out.println("trackmate" + currenttimelocation[d] + " " +  frame);
+					}
+					currenttimelocation[ndim] = frame;
+					ranac.setPosition(currenttimelocation);
 
 					int spotlabelID = ranac.get().get();
 
-					if (spotlabelID == labelID) {
+					if (spotlabelID == labelID &&  model.getTrackModel().trackIDOf(spot)!=null ) {
 
 						int trackID = model.getTrackModel().trackIDOf(spot);
 						Pair<Boolean, Pair<Spot, Spot>> isDividingTMspot = isDividingTrack(spot, trackID, timegap,
@@ -380,6 +398,7 @@ public class TrackCorrectorRunner {
 					}
 				}
 
+			}
 			}
 
 		}
@@ -577,7 +596,7 @@ public class TrackCorrectorRunner {
 
 					if (count > 0) {
 
-						int time = Integer.parseInt(divisionspotsfile[0]);
+						int time = (int)Double.parseDouble(divisionspotsfile[0]);
 						double Z = Double.parseDouble(divisionspotsfile[1]);
 						double Y = Double.parseDouble(divisionspotsfile[2]);
 						double X = Double.parseDouble(divisionspotsfile[3]);
@@ -586,8 +605,9 @@ public class TrackCorrectorRunner {
 						double confidence = Double.parseDouble(divisionspotsfile[6]);
 						double angle = Double.parseDouble(divisionspotsfile[7]);
 
+						System.out.println(time + " " + Z + " " + Y + " " + X + "Locations");
 						RealPoint point = new RealPoint(X, Y, Z);
-						Oneatobject Spot = new Oneatobject(time, point, score, size, confidence, angle);
+						Oneatobject Spot = new Oneatobject(time, Z, Y, X, score, size, confidence, angle);
 
 						if (DivisionMap.get(time) == null) {
 							DivisionSpots = new ArrayList<Oneatobject>();
@@ -615,9 +635,9 @@ public class TrackCorrectorRunner {
 				ArrayList<Oneatobject> currentcell = region.getValue();
 				ArrayList<Spot> currentspots = new ArrayList<Spot>();
 				for (Oneatobject cell : currentcell) {
-					final double x = (cell.Location.getDoublePosition(0));
-					final double y = (cell.Location.getDoublePosition(1));
-					final double z = (cell.Location.getDoublePosition(2));
+					final double x = (cell.X);
+					final double y = (cell.Y);
+					final double z = (cell.Z);
 
 					double volume = cell.size;
 					double quality = cell.size;
@@ -629,7 +649,7 @@ public class TrackCorrectorRunner {
 					// Put spot features so we can get it back by feature name
 					currentspot.putFeature(POSITION_X, Double.valueOf(x));
 					currentspot.putFeature(POSITION_Y, Double.valueOf(y));
-					currentspot.putFeature(POSITION_Z, Double.valueOf(x));
+					currentspot.putFeature(POSITION_Z, Double.valueOf(z));
 					currentspot.putFeature(FRAME, Double.valueOf(frame));
 					currentspot.putFeature(RADIUS, Double.valueOf(radius));
 					currentspot.putFeature(QUALITY, Double.valueOf(radius));
@@ -670,7 +690,7 @@ public class TrackCorrectorRunner {
 						double angle = Double.parseDouble(apoptosisspotsfile[7]);
 
 						RealPoint point = new RealPoint(X, Y, Z);
-						Oneatobject Spot = new Oneatobject(time, point, score, size, confidence, angle);
+						Oneatobject Spot = new Oneatobject(time, Z,Y,X, score, size, confidence, angle);
 
 						if (ApoptosisMap.get(time) == null) {
 							ApoptosisSpots = new ArrayList<Oneatobject>();
@@ -698,9 +718,9 @@ public class TrackCorrectorRunner {
 				ArrayList<Oneatobject> currentcell = region.getValue();
 				ArrayList<Spot> currentspots = new ArrayList<Spot>();
 				for (Oneatobject cell : currentcell) {
-					final double x = (cell.Location.getDoublePosition(0));
-					final double y = (cell.Location.getDoublePosition(1));
-					final double z = (cell.Location.getDoublePosition(2));
+					final double x = (cell.X);
+					final double y = (cell.Y);
+					final double z = (cell.Z);
 
 					double volume = cell.size;
 					double quality = cell.size;
@@ -711,7 +731,7 @@ public class TrackCorrectorRunner {
 					Spot currentspot = new Spot(x, y, z, radius, quality);
 					currentspot.putFeature(POSITION_X, Double.valueOf(x));
 					currentspot.putFeature(POSITION_Y, Double.valueOf(y));
-					currentspot.putFeature(POSITION_Z, Double.valueOf(x));
+					currentspot.putFeature(POSITION_Z, Double.valueOf(z));
 					currentspot.putFeature(FRAME, Double.valueOf(frame));
 					currentspot.putFeature(RADIUS, Double.valueOf(radius));
 					currentspot.putFeature(QUALITY, Double.valueOf(radius));

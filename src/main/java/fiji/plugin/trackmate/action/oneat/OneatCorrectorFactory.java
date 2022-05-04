@@ -29,7 +29,7 @@ import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.view.Views;
 
 @Plugin( type = TrackCorrectorFactory.class, visible = true )
-public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T > >implements TrackCorrectorFactory <T> {
+public  class  OneatCorrectorFactory implements TrackCorrectorFactory  {
 
 	
 	public static final String DIVISION_FILE = "Division_File";
@@ -93,7 +93,7 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 	
 
 	@Override
-	public   OneatCorrector  create(  ImgPlus< T > img,  Model model,
+	public   OneatCorrector  create(  ImgPlus< IntType > intimg,  Model model,
 			Map<String, Object> settings) {
 		
 		 
@@ -117,22 +117,8 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 		  
 		  int detectionchannel = (int) settings.get(KEY_TARGET_CHANNEL);
 		  assert detectionchannel <= img.numDimensions(): "Channel can not exceed the image dimension";
-		  ImgPlus <T> detectionimg =  img;
-		  if (img.dimensionIndex(Axes.CHANNEL) > 0) 
-		     detectionimg = ImgPlusViews.hyperSlice( img, img.dimensionIndex( Axes.CHANNEL ), (int) detectionchannel );
-		 
-		  AxisType[] axes = new AxisType[] {
-					Axes.X,
-					Axes.Y,
-					Axes.Z,
-					Axes.TIME };
-		  final ImgPlus< IntType > intimg = new ImgPlus<IntType>( Util.getArrayOrCellImgFactory( detectionimg, new IntType() ).create( detectionimg ), "lblimg", axes);
-			LoopBuilder
-					.setImages( Views.zeroMin( detectionimg ), intimg )
-					.multiThreaded( false )
-					.forEachPixel( ( i, o ) -> o.setReal( i.getRealDouble() ) );
-			
-		  return new OneatCorrector(oneatdivisionfile, oneatapoptosisfile, intimg, (int) mintrackletlength, (int) timegap, sizeratio, linkingdistance, createlinks, breaklinks, model, settings);
+		  
+		  return new OneatCorrector(oneatdivisionfile, oneatapoptosisfile, intimg, (int) mintrackletlength, (int) timegap, detectionchannel, sizeratio, linkingdistance, createlinks, breaklinks, model, settings);
 	}
 
 	@Override
@@ -258,8 +244,8 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 	}
 
 	@Override
-	public OneatCorrectorFactory<T> copy() {
-		return new OneatCorrectorFactory<T>();
+	public OneatCorrectorFactory copy() {
+		return new OneatCorrectorFactory();
 	}
 
 

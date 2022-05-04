@@ -46,8 +46,8 @@ public class OneatExporterPanel extends JPanel {
 	private double linkdist;
 	private  int deltat;
 	private  int tracklet;
-	private boolean createlinks;
-	private boolean breaklinks;
+	private boolean createlinks = true;
+	private boolean breaklinks = false;
 	
 	private JButton Loaddivisioncsvbutton;
 	private JButton Loadapoptosiscsvbutton;
@@ -192,7 +192,7 @@ public class OneatExporterPanel extends JPanel {
 				};
 
 				csvfile.setCurrentDirectory(new File(settings.imp.getOriginalFileInfo().directory));
-				csvfile.setDialogTitle("Division Detection file");
+				csvfile.setDialogTitle("Mitosis Detection file");
 				csvfile.setFileSelectionMode(JFileChooser.FILES_ONLY);
 				csvfile.setFileFilter(csvfilter);
 

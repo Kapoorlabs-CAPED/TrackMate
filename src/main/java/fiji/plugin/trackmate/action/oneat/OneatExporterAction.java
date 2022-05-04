@@ -32,8 +32,15 @@ import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
 import fiji.plugin.trackmate.util.TMUtils;
 import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
+import net.imagej.axis.AxisType;
+import net.imglib2.img.display.imagej.ImgPlusViews;
+import net.imglib2.loops.LoopBuilder;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 
 public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > extends AbstractTMAction {
 
@@ -51,7 +58,7 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 
 	public static final String NAME = "Launch Oneat track corrector";
 	
-	private static int detchannel = 0;
+	private static int detchannel = 1;
 	
 	private double sizeratio = 0.75;
 	
@@ -61,9 +68,7 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 	
 	private int tracklet = 2;
 	
-	private boolean createlinks = false;
-	
-	private boolean breaklinks = false;
+
 	
 	@Override
 	public void execute(TrackMate trackmate, SelectionModel selectionModel, DisplaySettings displaySettings,
@@ -88,15 +93,38 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 			tracklet = panel.getMinTracklet();
 			deltat = panel.getTimeGap();
 			sizeratio = panel.getSizeRatio();
-			breaklinks = panel.getBreakLinks();
-			createlinks = panel.getCreateLinks();
+			boolean breaklinks = panel.getBreakLinks();
+			boolean createlinks = panel.getCreateLinks();
 			detchannel = panel.getDetectionChannel();
 			linkdist = panel.getLinkDist();
 			
 			System.out.println(breaklinks + " " +  createlinks);
 			Map<String, Object> mapsettings = getSettings(oneatdivisionfile,oneatapotosisfile,tracklet,deltat,sizeratio,breaklinks,createlinks,detchannel,linkdist );
-			OneatCorrectorFactory<T> corrector = new OneatCorrectorFactory<T>();
-			OneatCorrector oneatcorrector = corrector.create(img, model, mapsettings);
+			OneatCorrectorFactory corrector = new OneatCorrectorFactory();
+			ImgPlus <T> detectionimg =  img;
+			if (img.dimensionIndex(Axes.CHANNEL) > 0) 
+			     detectionimg = ImgPlusViews.hyperSlice( img, img.dimensionIndex( Axes.CHANNEL ), (int) detchannel );
+			else if ((img.dimensionIndex(Axes.CHANNEL) < 0) && img.numDimensions() < 5)
+				  
+				  detectionimg = img;
+			
+			else if (img.numDimensions() == 5)
+				 
+				detectionimg = ImgPlusViews.hyperSlice( img, 0, (int) detchannel );
+					
+			 
+			AxisType[] axes = new AxisType[] {
+						Axes.X,
+						Axes.Y,
+						Axes.Z,
+						Axes.TIME };
+			final ImgPlus< IntType > intimg = new ImgPlus<IntType>( Util.getArrayOrCellImgFactory( detectionimg, new IntType() ).create( detectionimg ), "lblimg", axes);
+			LoopBuilder
+						.setImages( Views.zeroMin( detectionimg ), intimg )
+						.multiThreaded( false )
+						.forEachPixel( ( i, o ) -> o.setReal( i.getRealDouble() ) );
+			System.out.println(intimg.numDimensions());	
+			OneatCorrector oneatcorrector = corrector.create(intimg, model, mapsettings);
 			oneatcorrector.checkInput();
 			oneatcorrector.process();
 		}

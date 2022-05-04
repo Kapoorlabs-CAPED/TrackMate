@@ -26,6 +26,8 @@ public class OneatCorrector implements TrackCorrector {
 
     private final int mintrackletlength;
     
+    private final int detectionchannel;
+    
     private final int timegap;
     
     private final double sizeratio;
@@ -62,6 +64,7 @@ public class OneatCorrector implements TrackCorrector {
 			final ImgPlus<IntType> img, 
 			final int mintrackletlength,
 			final int timegap,
+			final int detectionchannel,
 			final double sizeratio,
 			final double linkingdistance,
 			final boolean createlinks, 
@@ -77,6 +80,8 @@ public class OneatCorrector implements TrackCorrector {
 		this.mintrackletlength = mintrackletlength;
 		
 		this.timegap = timegap;
+		
+		this.detectionchannel = detectionchannel;
 		
 		this.sizeratio = sizeratio;
 		
@@ -127,7 +132,7 @@ public class OneatCorrector implements TrackCorrector {
 		if(divisionspots.keySet().size() > 0) {
 			
 			// This object contains the track ID and a list of split points and the root of the lineage tree
-			Mitossisspots = TrackCorrectorRunner.getTrackID(model, img, divisionframespots, true, timegap);
+			Mitossisspots = TrackCorrectorRunner.getTrackID(model, img, divisionframespots, true, timegap, detectionchannel);
 			
 			
 			// To be safe let us sort the split points in ascending order of frame
@@ -146,7 +151,7 @@ public class OneatCorrector implements TrackCorrector {
         if(apoptosisspots.keySet().size() > 0) {
 			
         	// This object contains the track ID and a list of single object with the apoptotic spot where the track has to terminate and the root of the lineage tree
-			Apoptosisspots = TrackCorrectorRunner.getTrackID( model, img, apoptosisframespots, false, timegap); 
+			Apoptosisspots = TrackCorrectorRunner.getTrackID( model, img, apoptosisframespots, false, timegap, detectionchannel); 
 			
 			// To be safe let us sort the dead points in ascending order of frame
 			
