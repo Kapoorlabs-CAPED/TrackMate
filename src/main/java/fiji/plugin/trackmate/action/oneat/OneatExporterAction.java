@@ -121,7 +121,6 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 						.setImages( Views.zeroMin( detectionimg ), intimg )
 						.multiThreaded( false )
 						.forEachPixel( ( i, o ) -> o.setReal( i.getRealDouble() ) );
-			System.out.println(intimg.numDimensions());	
 			OneatCorrector oneatcorrector = corrector.create(intimg, model, mapsettings, logger);
 			oneatcorrector.checkInput();
 			oneatcorrector.process();

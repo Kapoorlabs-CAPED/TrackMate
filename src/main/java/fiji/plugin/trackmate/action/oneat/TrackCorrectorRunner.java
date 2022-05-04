@@ -97,9 +97,12 @@ public class TrackCorrectorRunner {
 				Set<DefaultWeightedEdge> killertrack = trackmodel.trackEdges(trackID);
 				for ( final DefaultWeightedEdge edge : killertrack )
 				{
-					final Spot source = graph.getEdgeSource( edge );
+					final Spot source = trackmodel.getEdgeSource(edge);
+					graph.addVertex(source);
 					if(source!=killerspot) {
-					final Spot target = graph.getEdgeTarget( edge );
+						
+					final Spot target =  trackmodel.getEdgeTarget(edge);
+					graph.addVertex(target);
 					final DefaultWeightedEdge newedge = graph.addEdge(source, target);
 					graph.setEdgeWeight(newedge, -1);
 					}
@@ -142,16 +145,17 @@ public class TrackCorrectorRunner {
 				Spot firstdaughter = null;
 				Spot seconddaughter = null;
 
-				
+				spotsIt =  regionspot(spotsIt, motherspot, searchdistance);
 
 					// Get the closest trackmate spot in the next frame
 
+				do {
 					Pair<Double, Spot> firstclosestspot = closestnextframeSpot(motherspot, spotsIt);
 					double firstclosestdistance = firstclosestspot.getA();
 
 					double firstdaughtersize = firstclosestspot.getB().getFeature(QUALITY);
 
-					if (mothersize / firstdaughtersize <= motherdaughtersize && acceptFirstdaughter == false
+					if (firstdaughtersize/mothersize <= motherdaughtersize && acceptFirstdaughter == false
 							&& firstclosestdistance <= searchdistance) {
 
 						acceptFirstdaughter = true;
@@ -160,13 +164,15 @@ public class TrackCorrectorRunner {
 					}
 
 					// Now remove that spot from the iterable
+					
+					
 					spotsIt = removespot(spotsIt, firstclosestspot.getB());
 					// Get the second closest trackmate spot in the next frame
 					Pair<Double, Spot> secondclosestspot = closestnextframeSpot(motherspot, spotsIt);
 					double secondclosestdistance = secondclosestspot.getA();
 					double seconddaughtersize = secondclosestspot.getB().getFeature(QUALITY);
 
-					if (mothersize / seconddaughtersize <= motherdaughtersize && acceptSeconddaughter == false
+					if (seconddaughtersize /mothersize <= motherdaughtersize && acceptSeconddaughter == false
 							&& secondclosestdistance <= searchdistance) {
 
 						acceptSeconddaughter = true;
@@ -174,13 +180,16 @@ public class TrackCorrectorRunner {
 
 					}
 
-			
+			} while (!acceptFirstdaughter && !acceptSeconddaughter || spotsIt.iterator().hasNext());
 
 				if (acceptFirstdaughter && acceptSeconddaughter) {
+					
+					System.out.println(firstdaughter.ID() + " " + seconddaughter.ID() + "mother" + motherspot.ID());
 
 					// We have to get rid of this trackID and the trackID of the daughters
 					MitosisIDs.add(trackID);
-					trackmodel.trackSpots(trackID).clear();
+					graph.addVertex(firstdaughter);
+					graph.addVertex(seconddaughter);
 					int firstdaughtertrackID = trackmodel.trackIDOf(firstdaughter);
 					int seconddaughtertrackID = trackmodel.trackIDOf(seconddaughter);
 					
@@ -194,12 +203,18 @@ public class TrackCorrectorRunner {
 					Set<DefaultWeightedEdge> startmothertrack = trackmodel.trackEdges(trackID);
 					for ( final DefaultWeightedEdge edge : startmothertrack )
 					{
-						final Spot source = graph.getEdgeSource( edge );
-						if(source!=motherspot) {
-						final Spot target = graph.getEdgeTarget( edge );
+						final Spot source = trackmodel.getEdgeSource(edge);
+						
+						final Spot target = trackmodel.getEdgeTarget(edge);
+						
+						graph.addVertex(source);
+						graph.addVertex(target);
 						final DefaultWeightedEdge newedge = graph.addEdge(source, target);
 						graph.setEdgeWeight(newedge, -1);
-						}
+						if(source==motherspot) 
+						   break;
+						
+						
 					}
 					
 					// Get the forward track of the first daughter
@@ -211,35 +226,43 @@ public class TrackCorrectorRunner {
 					// Mitosis daughters have to break previous connections so can not be target of a spot
 					for ( final DefaultWeightedEdge edge : firstdaughtertrack )
 					{
-						final Spot source = graph.getEdgeSource( edge );
+						final Spot source = trackmodel.getEdgeSource(edge);
+						final Spot target = trackmodel.getEdgeTarget(edge);
 						
-						final Spot target = graph.getEdgeTarget( edge );
-						if(target!=firstdaughter) {
+						if(source==firstdaughter) {
+						
+						graph.addVertex(source);
+						graph.addVertex(target);
 						final DefaultWeightedEdge newedge = graph.addEdge(source, target);
+						
 						graph.setEdgeWeight(newedge, -1);
+						
 						}
 					}
 					
 					
 					for ( final DefaultWeightedEdge edge : seconddaughtertrack )
 					{
-						final Spot source = graph.getEdgeSource( edge );
+						final Spot source = trackmodel.getEdgeSource(edge);
+						final Spot target = trackmodel.getEdgeTarget(edge);
+						if(source==seconddaughter) {
+							
 						
-						final Spot target = graph.getEdgeTarget( edge );
-						if(target!=seconddaughter) {
+						graph.addVertex(source);
+						graph.addVertex(target);
 						final DefaultWeightedEdge newedge = graph.addEdge(source, target);
+						
 						graph.setEdgeWeight(newedge, -1);
-						}
+					}
+					
 					}
 					
 					
-					trackmodel.trackSpots(firstdaughtertrackID).clear();
-					trackmodel.trackSpots(seconddaughtertrackID).clear();
+					
 					
 					// Establish the connection between the split spot and daughters
 					final DefaultWeightedEdge firstdaughteredge = graph.addEdge(motherspot, firstdaughter);
 					graph.setEdgeWeight(firstdaughteredge, -1);
-					
 					final DefaultWeightedEdge seconddaughteredge = graph.addEdge(motherspot, seconddaughter);
 					graph.setEdgeWeight(seconddaughteredge, -1);
 					
@@ -261,8 +284,10 @@ public class TrackCorrectorRunner {
 				Set<DefaultWeightedEdge> normaltracks = trackmodel.trackEdges(trackID);
 				for ( final DefaultWeightedEdge edge : normaltracks )
 				{
-					final Spot source = graph.getEdgeSource( edge );
-					final Spot target = graph.getEdgeTarget( edge );
+					final Spot source = trackmodel.getEdgeSource(edge);
+					final Spot target = trackmodel.getEdgeTarget(edge);
+					graph.addVertex(source);
+					graph.addVertex(target);
 					final DefaultWeightedEdge newedge = graph.addEdge(source, target);
 					graph.setEdgeWeight(newedge, -1);
 					
@@ -279,19 +304,40 @@ public class TrackCorrectorRunner {
 
 	}
 
+	private static Iterable<Spot> regionspot(Iterable<Spot> spotsIt, Spot motherspot, double region) {
+		
+		Iterator<Spot> spots = spotsIt.iterator();
+		Set<Spot> closespots = new HashSet<Spot>();
+
+		while (spots.hasNext()) {
+			Spot currentspot = spots.next();
+
+			if (currentspot.squareDistanceTo(motherspot) <= region * region)
+				closespots.add(currentspot);
+				
+			
+		}
+
+		
+		return closespots;
+		
+	}
+	
 	private static Iterable<Spot> removespot(Iterable<Spot> spotsIt, Spot removespot) {
 
 		Iterator<Spot> spots = spotsIt.iterator();
 		Set<Spot> removespots = new HashSet<Spot>();
-		while (spots.hasNext()) {
 
+		while (spots.hasNext()) {
 			Spot currentspot = spots.next();
 
-			if (currentspot.equals(removespot))
+			if (currentspot.hashCode() == (removespot.hashCode()))
 				spots.remove();
-			removespots.add(currentspot);
+			else
+			   removespots.add(currentspot);
 		}
 
+		
 		return removespots;
 
 	}
@@ -312,7 +358,7 @@ public class TrackCorrectorRunner {
 		
 		Set<Integer> AllTrackIds = model.getTrackModel().trackIDs(false);
 		HashMap<String, Pair<Spot, Integer>> uniquelabelID = new HashMap<String, Pair<Spot, Integer>>(); 
-		
+		logger.flush();
 		logger.log( "Collecting tracks, in total " + AllTrackIds.size() +  ".\n" );
 		int count = 0;
 		for(int trackID: AllTrackIds) {
