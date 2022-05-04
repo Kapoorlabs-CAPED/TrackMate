@@ -58,7 +58,7 @@ public interface  TrackCorrectorFactory < T extends RealType< T > & NativeType< 
 		 * @return a new configuration panel.
 		 */
 		public JPanel getTrackCorrectorConfigurationPanel(final Settings settings, final Model model, int detchannel, int sizeratio, double linkdist, int deltat,
-				int tracklet, boolean createlinks, boolean breaklinks );
+				int tracklet);
 
 		/**
 		 * Marshalls a settings map to a JDom element, ready for saving to XML. The

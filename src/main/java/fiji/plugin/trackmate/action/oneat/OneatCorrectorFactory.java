@@ -8,7 +8,6 @@ import static fiji.plugin.trackmate.io.IOUtils.writeAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 import net.imglib2.util.Util;
 import javax.swing.ImageIcon;
@@ -19,18 +18,12 @@ import org.scijava.plugin.Plugin;
 
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
-import net.imglib2.img.ImgFactory;
 import net.imglib2.img.display.imagej.ImgPlusViews;
 import net.imglib2.loops.LoopBuilder;
 import net.imglib2.type.NativeType;
-import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.view.Views;
@@ -111,8 +104,6 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 		  int mintrackletlength = (int) settings.get(KEY_TRACKLET_LENGTH);
 		  
 		  int timegap = (int) settings.get(KEY_TIME_GAP);
-		 
-		  
 		  
 		  double sizeratio = (double) settings.get(KEY_SIZE_RATIO);
 		  
@@ -124,10 +115,8 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 		  
 		  
 		  
-		  System.out.println(oneatdivisionfile + " " + oneatapoptosisfile + " " + mintrackletlength + " " + timegap );
 		  int detectionchannel = (int) settings.get(KEY_TARGET_CHANNEL);
 		  assert detectionchannel <= img.numDimensions(): "Channel can not exceed the image dimension";
-		  System.out.println(img.dimensionIndex(Axes.CHANNEL) + " " +  img.dimensionIndex(Axes.TIME) + " " +  img.dimensionIndex(Axes.X) + " " +  img.dimensionIndex(Axes.Y) + " " + img.dimensionIndex(Axes.Z));
 		  ImgPlus <T> detectionimg =  img;
 		  if (img.dimensionIndex(Axes.CHANNEL) > 0) 
 		     detectionimg = ImgPlusViews.hyperSlice( img, img.dimensionIndex( Axes.CHANNEL ), (int) detectionchannel );
@@ -148,10 +137,10 @@ public  class  OneatCorrectorFactory < T extends RealType< T > & NativeType< T >
 
 	@Override
 	public JPanel getTrackCorrectorConfigurationPanel(Settings settings, Model model, int detchannel, int sizeratio, double linkdist, int deltat,
-			int tracklet, boolean createlinks, boolean breaklinks) {
+			int tracklet) {
 		
 		return new OneatExporterPanel(settings, model,  detchannel,  sizeratio,  linkdist,  deltat,
-				 tracklet,  createlinks,  breaklinks);
+				 tracklet);
 	}
 
 	@Override
