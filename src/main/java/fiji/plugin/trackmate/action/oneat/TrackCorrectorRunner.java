@@ -20,6 +20,7 @@ import org.scijava.app.StatusService;
 import org.scijava.log.LogService;
 import org.scijava.options.OptionsService;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -78,7 +79,7 @@ public class TrackCorrectorRunner {
 		Set<Integer> MitosisIDs = new HashSet<Integer>();
 		Set<Integer> ApoptosisIDs = new HashSet<Integer>();
 		
-		if (Apoptosisspots.size() > 0)
+		if (Apoptosisspots!=null)
 		//Lets take care of apoptosis
 		for (Map.Entry<Integer, Pair<ArrayList<Spot>, Spot>> trackidspots : Apoptosisspots.entrySet()) {
 			
@@ -108,7 +109,7 @@ public class TrackCorrectorRunner {
 		
 		if(createlinks) {
 		// Lets take care of mitosis
-			if (Mitosisspots.size() > 0) 	
+			if (Mitosisspots!=null) 	
 		for (Map.Entry<Integer, Pair<ArrayList<Spot>, Spot>> trackidspots : Mitosisspots.entrySet()) {
 
 			// Get the current trackID
@@ -289,12 +290,11 @@ public class TrackCorrectorRunner {
 	
 	public static < T extends RealType< T > & NativeType< T > > HashMap<Integer, Pair<ArrayList<Spot>, Spot>> getTrackID(final Model model,
 			final ImgPlus<IntType> intimg, HashMap<Integer, ArrayList<Spot>> framespots, final boolean checkdivision,
-			final int timegap, final int detectionchannel) {
+			final int timegap, final int detectionchannel, final Logger logger) {
 
 		HashMap<Integer, ArrayList<Spot>> Mitosisspots = new HashMap<Integer, ArrayList<Spot>>();
 		HashMap<Integer, Pair<ArrayList<Spot>, Spot>> TrackIDstartspots = new HashMap<Integer, Pair<ArrayList<Spot>, Spot>>();
 		// Spots from trackmate
-		SpotCollection allspots = model.getSpots();
 		
 			
 		int ndim = intimg.numDimensions() - 1;
@@ -305,14 +305,19 @@ public class TrackCorrectorRunner {
 		Set<Integer> AllTrackIds = model.getTrackModel().trackIDs(false);
 		HashMap<String, Pair<Spot, Integer>> uniquelabelID = new HashMap<String, Pair<Spot, Integer>>(); 
 		
-		
+		logger.log( "Collecting tracks, in total " + AllTrackIds.size() +  ".\n" );
+		int count = 0;
 		for(int trackID: AllTrackIds) {
 			
 			Set<Spot> trackspots = model.getTrackModel().trackSpots(trackID);
-			
+			count++;
 			for(Spot spot: trackspots) {
 				
+				
+				logger.setProgress( ( float ) ( count ) / AllTrackIds.size() );
+				
 				int time = spot.getFeature(FRAME).intValue();
+				if (time < intimg.dimension(ndim) - 1) {
 				long[] location = new long[ndim];
 				long[] timelocation = new long[ndim + 1];
 				for (int d = 0; d < ndim; ++d) {
@@ -327,27 +332,31 @@ public class TrackCorrectorRunner {
 				uniquelabelID.put(uniqueID, new ValuePair<Spot, Integer> (spot, trackID));
 				
 			}
-			
+			}
 		}
 		
+		logger.log( " Matching with oneat spots.\n" );
+		logger.setProgress( 0. );
+		count = 0;
 		
 		
 		for (Map.Entry<Integer, ArrayList<Spot>> framemap : framespots.entrySet()) {
 
 			int frame = framemap.getKey();
-			if (frame < intimg.dimension(ndim)) {
-				
+			if (frame < intimg.dimension(ndim) - 1) {
+				count++;
 				
 			ArrayList<Spot> spotlist = framemap.getValue();
 
 			for (Spot currentspots : spotlist) {
+				
+				logger.setProgress( ( float ) ( count ) / framespots.size() );
 
 				long[] location = new long[ndim];
 				long[] timelocation = new long[ndim + 1];
 				for (int d = 0; d < ndim; ++d) {
 					location[d] = (long) currentspots.getDoublePosition(d);
 					timelocation[d] = location[d];
-                    System.out.println( "oneat" + timelocation[d] + " " +  frame);
 				}
 				timelocation[ndim] = frame;
 				ranac.setPosition(timelocation);
@@ -355,7 +364,7 @@ public class TrackCorrectorRunner {
 				int labelID = ranac.get().get();
 
 				String uniqueID = Integer.toString(labelID) + Integer.toString(frame);
-				
+				if(uniquelabelID.containsKey(uniqueID)) {
 				Pair<Spot, Integer> spotandtrackID = uniquelabelID.get(uniqueID);
 				// Now get the spot ID
 
@@ -417,9 +426,10 @@ public class TrackCorrectorRunner {
 				}
 
 			}
-			
+		}
 
-		
+		logger.log( "Verifying lineage trees.\n" );
+		logger.setProgress( 0. );
 
 		
 		return TrackIDstartspots;
@@ -623,8 +633,6 @@ public class TrackCorrectorRunner {
 						double confidence = Double.parseDouble(divisionspotsfile[6]);
 						double angle = Double.parseDouble(divisionspotsfile[7]);
 
-						System.out.println(time + " " + Z + " " + Y + " " + X + "Locations");
-						RealPoint point = new RealPoint(X, Y, Z);
 						Oneatobject Spot = new Oneatobject(time, Z, Y, X, score, size, confidence, angle);
 
 						if (DivisionMap.get(time) == null) {
@@ -707,7 +715,6 @@ public class TrackCorrectorRunner {
 						double confidence = Double.parseDouble(apoptosisspotsfile[6]);
 						double angle = Double.parseDouble(apoptosisspotsfile[7]);
 
-						RealPoint point = new RealPoint(X, Y, Z);
 						Oneatobject Spot = new Oneatobject(time, Z,Y,X, score, size, confidence, angle);
 
 						if (ApoptosisMap.get(time) == null) {

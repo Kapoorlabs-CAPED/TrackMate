@@ -9,24 +9,17 @@ import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
 
 import java.io.File;
 import java.util.Map;
-import net.imglib2.util.Util;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 
 import org.jdom2.Element;
 import org.scijava.plugin.Plugin;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import net.imagej.ImgPlus;
-import net.imagej.axis.Axes;
-import net.imagej.axis.AxisType;
-import net.imglib2.img.display.imagej.ImgPlusViews;
-import net.imglib2.loops.LoopBuilder;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
-import net.imglib2.view.Views;
 
 @Plugin( type = TrackCorrectorFactory.class, visible = true )
 public  class  OneatCorrectorFactory implements TrackCorrectorFactory  {
@@ -94,7 +87,7 @@ public  class  OneatCorrectorFactory implements TrackCorrectorFactory  {
 
 	@Override
 	public   OneatCorrector  create(  ImgPlus< IntType > intimg,  Model model,
-			Map<String, Object> settings) {
+			Map<String, Object> settings, final Logger logger) {
 		
 		 
 		  File oneatdivisionfile = (File) settings.get(DIVISION_FILE);
@@ -118,15 +111,14 @@ public  class  OneatCorrectorFactory implements TrackCorrectorFactory  {
 		  int detectionchannel = (int) settings.get(KEY_TARGET_CHANNEL);
 		  assert detectionchannel <= img.numDimensions(): "Channel can not exceed the image dimension";
 		  
-		  return new OneatCorrector(oneatdivisionfile, oneatapoptosisfile, intimg, (int) mintrackletlength, (int) timegap, detectionchannel, sizeratio, linkingdistance, createlinks, breaklinks, model, settings);
+		  return new OneatCorrector(oneatdivisionfile, oneatapoptosisfile, intimg, (int) mintrackletlength, (int) timegap, detectionchannel, sizeratio, linkingdistance, createlinks, breaklinks, model, settings, logger);
 	}
 
 	@Override
 	public JPanel getTrackCorrectorConfigurationPanel(Settings settings, Model model, int detchannel, int sizeratio, double linkdist, int deltat,
 			int tracklet) {
 		
-		return new OneatExporterPanel(settings, model,  detchannel,  sizeratio,  linkdist,  deltat,
-				 tracklet);
+		return new OneatExporterPanel(settings, model);
 	}
 
 	@Override

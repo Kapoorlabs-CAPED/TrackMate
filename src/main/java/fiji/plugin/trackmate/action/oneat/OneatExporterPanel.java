@@ -60,14 +60,8 @@ public class OneatExporterPanel extends JPanel {
 	private JCheckBox CreateNewLinks;
 	private JCheckBox BreakCurrentLinks;
 	
-	public OneatExporterPanel(final Settings settings, final Model model, final int detchannel, final double sizeratio, final double linkdist, final int deltat,
-			final int tracklet) {
+	public OneatExporterPanel(final Settings settings, final Model model) {
 
-		this.detchannel = detchannel;
-		this.sizeratio = sizeratio;
-		this.linkdist = linkdist;
-		this.deltat = deltat;
-		this.tracklet = tracklet;
 		
 		
 		
@@ -248,8 +242,26 @@ public class OneatExporterPanel extends JPanel {
 
 		});
 		
-		DetectionChannel.addPropertyChangeListener( "value", ( e ) -> this.detchannel = ( ( Number ) DetectionChannel.getValue() ).intValue() );
-		MotherDaughterSizeRatio.addPropertyChangeListener( "value", ( e ) -> this.sizeratio = ( ( Number ) MotherDaughterSizeRatio.getValue() ).doubleValue() );
+		DetectionChannel.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				detchannel = ( ( Number ) DetectionChannel.getValue() ).intValue();
+				
+			}
+		});
+		
+		
+		MotherDaughterSizeRatio.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+				sizeratio = ( ( Number ) MotherDaughterSizeRatio.getValue() ).doubleValue();
+				
+			}
+		});
+		
 		
 		CreateNewLinks.addItemListener(new ItemListener() {
 			
@@ -277,9 +289,37 @@ public class OneatExporterPanel extends JPanel {
 		});
 		
 		
-		MinTracklet.addPropertyChangeListener( "value", ( e ) -> this.tracklet = ((Number) MinTracklet.getValue()).intValue() );
-		TimeGap.addPropertyChangeListener( "value", ( e ) -> this.deltat = ((Number) TimeGap.getValue()).intValue() );
-		MotherDaughterLinkDist.addPropertyChangeListener( "value", ( e ) -> this.linkdist = ( ( Number ) MotherDaughterLinkDist.getValue() ).doubleValue() );
+		
+		MinTracklet.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				tracklet = ((Number) MinTracklet.getValue()).intValue();
+				
+			}
+		});
+		
+		
+		TimeGap.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				deltat = ((Number) TimeGap.getValue()).intValue();
+				
+			}
+		});
+		
+		
+		MotherDaughterLinkDist.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+				linkdist = ( ( Number ) MotherDaughterLinkDist.getValue() ).doubleValue();
+				
+			}
+		});
+		
 		
 	}
 

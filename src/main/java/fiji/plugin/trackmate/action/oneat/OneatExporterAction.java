@@ -82,8 +82,7 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 		{
 			
 			
-			final OneatExporterPanel panel = new OneatExporterPanel(settings, model, detchannel,  sizeratio,  linkdist,  deltat,
-					 tracklet);
+			final OneatExporterPanel panel = new OneatExporterPanel(settings, model);
 			final int userInput = JOptionPane.showConfirmDialog(gui, panel, "Launch Oneat track corrector", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, TRACKMATE_ICON);
 			if ( userInput != JOptionPane.OK_OPTION )
 				return;
@@ -98,7 +97,6 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 			detchannel = panel.getDetectionChannel();
 			linkdist = panel.getLinkDist();
 			
-			System.out.println(breaklinks + " " +  createlinks);
 			Map<String, Object> mapsettings = getSettings(oneatdivisionfile,oneatapotosisfile,tracklet,deltat,sizeratio,breaklinks,createlinks,detchannel,linkdist );
 			OneatCorrectorFactory corrector = new OneatCorrectorFactory();
 			ImgPlus <T> detectionimg =  img;
@@ -124,7 +122,7 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 						.multiThreaded( false )
 						.forEachPixel( ( i, o ) -> o.setReal( i.getRealDouble() ) );
 			System.out.println(intimg.numDimensions());	
-			OneatCorrector oneatcorrector = corrector.create(intimg, model, mapsettings);
+			OneatCorrector oneatcorrector = corrector.create(intimg, model, mapsettings, logger);
 			oneatcorrector.checkInput();
 			oneatcorrector.process();
 		}

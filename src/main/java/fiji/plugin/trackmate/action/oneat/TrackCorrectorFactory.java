@@ -7,6 +7,7 @@ import javax.swing.JPanel;
 
 import org.jdom2.Element;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.SpotCollection;
@@ -47,7 +48,7 @@ public interface  TrackCorrectorFactory  extends TrackMateModule
 		 *            the settings map configuring the tracker.
 		 * @return a new {@link SpotTracker} instance.
 		 */
-		public TrackCorrector create(  ImgPlus< IntType > img,  Model model, final Map< String, Object > settings );
+		public TrackCorrector create(  ImgPlus< IntType > img,  Model model, final Map< String, Object > settings, final Logger logger );
 
 		/**
 		 * Returns a new GUI panel able to configure the settings suitable for the

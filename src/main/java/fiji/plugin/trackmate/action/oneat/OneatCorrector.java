@@ -56,6 +56,7 @@ public class OneatCorrector implements TrackCorrector {
 	
 	private final Map<String, Object> settings;
 	
+	private final Logger logger;
 	
 
 	public OneatCorrector(
@@ -69,7 +70,7 @@ public class OneatCorrector implements TrackCorrector {
 			final double linkingdistance,
 			final boolean createlinks, 
 			final boolean breaklinks, final Model model,
-			Map<String, Object> settings) {
+			Map<String, Object> settings, final Logger logger) {
 
 		this.oneatdivision = oneatdivision;
 
@@ -94,6 +95,8 @@ public class OneatCorrector implements TrackCorrector {
 		this.model = model;
 		
 		this.settings = settings;
+		
+		this.logger = logger;
 
 	}
 
@@ -117,7 +120,7 @@ public class OneatCorrector implements TrackCorrector {
 
 		apoptosisspots = new SpotCollection();
 		apoptosisframespots = new HashMap<Integer, ArrayList<Spot>>();
-        int ndims = img.numDimensions();
+        int ndims = img.numDimensions() - 1;
 		Pair<  Pair<SpotCollection, HashMap<Integer, ArrayList<Spot>>>, Pair<SpotCollection, HashMap<Integer, ArrayList<Spot>>>> result = TrackCorrectorRunner.run(
 				oneatdivision, oneatapoptosis, ndims);
 		//Oneat found spots for mitosis
@@ -132,7 +135,7 @@ public class OneatCorrector implements TrackCorrector {
 		if(divisionspots.keySet().size() > 0) {
 			
 			// This object contains the track ID and a list of split points and the root of the lineage tree
-			Mitossisspots = TrackCorrectorRunner.getTrackID(model, img, divisionframespots, true, timegap, detectionchannel);
+			Mitossisspots = TrackCorrectorRunner.getTrackID(model, img, divisionframespots, true, timegap, detectionchannel, logger);
 			
 			
 			// To be safe let us sort the split points in ascending order of frame
@@ -151,7 +154,7 @@ public class OneatCorrector implements TrackCorrector {
         if(apoptosisspots.keySet().size() > 0) {
 			
         	// This object contains the track ID and a list of single object with the apoptotic spot where the track has to terminate and the root of the lineage tree
-			Apoptosisspots = TrackCorrectorRunner.getTrackID( model, img, apoptosisframespots, false, timegap, detectionchannel); 
+			Apoptosisspots = TrackCorrectorRunner.getTrackID( model, img, apoptosisframespots, false, timegap, detectionchannel, logger); 
 			
 			// To be safe let us sort the dead points in ascending order of frame
 			
