@@ -51,7 +51,7 @@ import static fiji.plugin.trackmate.Spot.RADIUS;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_BREAK_LINKS;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_CREATE_LINKS;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TIME_GAP;
-import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_LINKING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_SPLITTING_MAX_DISTANCE;
 import static fiji.plugin.trackmate.Spot.QUALITY;
 
 public class TrackCorrectorRunner {
@@ -69,7 +69,7 @@ public class TrackCorrectorRunner {
 		SpotCollection allspots = model.getSpots();
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
-		double searchdistance = (double) settings.get(KEY_LINKING_MAX_DISTANCE);
+		double searchdistance = (double) settings.get(KEY_SPLITTING_MAX_DISTANCE);
 		int tmoneatdeltat = (int) settings.get(KEY_TIME_GAP);
 		boolean createlinks = (boolean) settings.get(KEY_CREATE_LINKS);
 		boolean breaklinks = (boolean) settings.get(KEY_BREAK_LINKS);

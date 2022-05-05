@@ -15,7 +15,7 @@ import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_CREAT
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_SIZE_RATIO;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TIME_GAP;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TRACKLET_LENGTH;
-import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_LINKING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_SPLITTING_MAX_DISTANCE;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TARGET_CHANNEL;
 
 import static fiji.plugin.trackmate.gui.Icons.TRACKMATE_ICON;
@@ -78,6 +78,8 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 		Settings settings = trackmate.getSettings();
 	
 		Map<String, Object> trackmapsettings = settings.trackerSettings;
+		
+		Map<String, Object> detectorsettings = settings.detectorSettings;
 		Model model = trackmate.getModel();
 		final ImgPlus<T> img = TMUtils.rawWraps( settings.imp );
 		
@@ -85,7 +87,7 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 		{
 			
 			
-			final OneatExporterPanel panel = new OneatExporterPanel(settings, model);
+			final OneatExporterPanel panel = new OneatExporterPanel(settings,trackmapsettings,detectorsettings, model);
 			final int userInput = JOptionPane.showConfirmDialog(gui, panel, "Launch Oneat track corrector", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, TRACKMATE_ICON);
 			if ( userInput != JOptionPane.OK_OPTION )
 				return;
@@ -148,7 +150,7 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 		settings.put(KEY_BREAK_LINKS, breaklinks);
 		settings.put(KEY_CREATE_LINKS, createlinks);
 		settings.put(KEY_TARGET_CHANNEL, detchannel);
-		settings.put(KEY_LINKING_MAX_DISTANCE, linkdist);
+		settings.put(KEY_SPLITTING_MAX_DISTANCE, linkdist);
 
 		return settings;
 	}
