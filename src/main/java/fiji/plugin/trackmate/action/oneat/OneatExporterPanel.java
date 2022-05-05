@@ -43,7 +43,7 @@ public class OneatExporterPanel extends JPanel {
 
 	private  int detchannel = 1;
 	private  double sizeratio = 0.75;
-	private double linkdist = 50;
+	private double linkdist = 250;
 	private  int deltat = 10;
 	private  int tracklet = 2;
 	private boolean createlinks = true;

@@ -58,19 +58,17 @@ public class TrackCorrectorRunner {
 
 	private final static Context context = TMUtils.getContext();
 
-	
-	
-	
-	public static SimpleWeightedGraph<Spot, DefaultWeightedEdge> getCorrectedTracks(final Model model, HashMap<Integer, Pair<ArrayList<Spot>, Spot>> Mitosisspots,
-			HashMap<Integer, Pair<ArrayList<Spot>, Spot>> Apoptosisspots, Map<String, Object> settings, final int ndim, final Logger logger) {
+	public static SimpleWeightedGraph<Spot, DefaultWeightedEdge> getCorrectedTracks(final Model model,
+			HashMap<Integer, Pair<ArrayList<Spot>, Spot>> Mitosisspots,
+			HashMap<Integer, Pair<ArrayList<Spot>, Spot>> Apoptosisspots, Map<String, Object> settings, final int ndim,
+			final Logger logger, int numThreads) {
 
-		
-		//Get the trackmodel and spots in the default tracking result and start to create a new graph
-        TrackModel trackmodel = model.getTrackModel();
+		// Get the trackmodel and spots in the default tracking result and start to
+		// create a new graph
+		TrackModel trackmodel = model.getTrackModel();
 		SpotCollection allspots = model.getSpots();
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
-		
-		
+
 		double motherdaughtersize = (double) settings.get(KEY_SIZE_RATIO);
 		double searchdistance = (double) settings.get(KEY_LINKING_MAX_DISTANCE);
 		boolean createlinks = (boolean) settings.get(KEY_CREATE_LINKS);
@@ -79,250 +77,229 @@ public class TrackCorrectorRunner {
 		Set<Integer> MitosisIDs = new HashSet<Integer>();
 		Set<Integer> ApoptosisIDs = new HashSet<Integer>();
 		int count = 0;
-		if (Apoptosisspots!=null) {
-			
-			logger.log( "Verifying apoptosis.\n" );
-		//Lets take care of apoptosis
-		for (Map.Entry<Integer, Pair<ArrayList<Spot>, Spot>> trackidspots : Apoptosisspots.entrySet()) {
-			 count++;
-			// Get the current trackID
-			int trackID = trackidspots.getKey();
-			Pair<ArrayList<Spot>, Spot> trackspots = trackidspots.getValue();
-			ApoptosisIDs.add(trackID);
-			
-			// Apoptosis cell can not be source of an edge
-			for (Spot killerspot : trackspots.getA()) {
-				
-				logger.setProgress( ( float ) ( count ) / Apoptosisspots.size() );
-				Set<DefaultWeightedEdge> killertrack = trackmodel.trackEdges(trackID);
-				for ( final DefaultWeightedEdge edge : killertrack )
-				{
-					final Spot source = trackmodel.getEdgeSource(edge);
-					graph.addVertex(source);
-					if(source!=killerspot) {
-						
-					final Spot target =  trackmodel.getEdgeTarget(edge);
-					graph.addVertex(target);
-					final DefaultWeightedEdge newedge = graph.addEdge(source, target);
-					graph.setEdgeWeight(newedge, -1);
-					}
-				}
-				
-			}
-			
-			
-		}
-		
-		}
-		
-		count = 0;
-		if(createlinks) {
-			logger.log( "Creating mitosis links.\n" );
-		// Lets take care of mitosis
-			if (Mitosisspots!=null) 	
-		for (Map.Entry<Integer, Pair<ArrayList<Spot>, Spot>> trackidspots : Mitosisspots.entrySet()) {
+		if (Apoptosisspots != null) {
 
-			// Get the current trackID
-			int trackID = trackidspots.getKey();
-			Pair<ArrayList<Spot>, Spot> trackspots = trackidspots.getValue();
-			
-			count++;
-			Boolean acceptFirstdaughter = false;
-			Boolean acceptSeconddaughter = false;
-			for (Spot motherspot : trackspots.getA()) {
+			logger.log("Verifying apoptosis.\n");
+			// Lets take care of apoptosis
+			for (Map.Entry<Integer, Pair<ArrayList<Spot>, Spot>> trackidspots : Apoptosisspots.entrySet()) {
+				count++;
+				// Get the current trackID
+				int trackID = trackidspots.getKey();
+				Pair<ArrayList<Spot>, Spot> trackspots = trackidspots.getValue();
+				ApoptosisIDs.add(trackID);
 
-				logger.setProgress( ( float ) ( count ) / Mitosisspots.size() );
-				// Get the location of spot in current frame
-				int currentframe = motherspot.getFeature(FRAME).intValue();
-				double mothersize = motherspot.getFeature(QUALITY);
-				long[] location = new long[ndim];
-				for (int d = 0; d < ndim; ++d)
-					location[d] = (long) motherspot.getDoublePosition(d);
+				// Apoptosis cell can not be source of an edge
+				for (Spot killerspot : trackspots.getA()) {
 
-				// Get spots in the next frame
-				Iterable<Spot> spotsIt = allspots.iterable(currentframe + 1, false);
-
-				Spot firstdaughter = null;
-				Spot seconddaughter = null;
-
-				spotsIt =  regionspot(spotsIt, motherspot, searchdistance);
-
-					// Get the closest trackmate spot in the next frame
-
-				do {
-					Pair<Double, Spot> firstclosestspot = closestnextframeSpot(motherspot, spotsIt);
-					double firstclosestdistance = firstclosestspot.getA();
-
-					double firstdaughtersize = firstclosestspot.getB().getFeature(QUALITY);
-
-					if (firstdaughtersize/mothersize <= motherdaughtersize && acceptFirstdaughter == false
-							&& firstclosestdistance <= searchdistance) {
-
-						acceptFirstdaughter = true;
-						firstdaughter = firstclosestspot.getB();
-
-					}
-
-					// Now remove that spot from the iterable
-					
-					
-					spotsIt = removespot(spotsIt, firstclosestspot.getB());
-					// Get the second closest trackmate spot in the next frame
-					Pair<Double, Spot> secondclosestspot = closestnextframeSpot(motherspot, spotsIt);
-					double secondclosestdistance = secondclosestspot.getA();
-					double seconddaughtersize = secondclosestspot.getB().getFeature(QUALITY);
-
-					if (seconddaughtersize /mothersize <= motherdaughtersize && acceptSeconddaughter == false
-							&& secondclosestdistance <= searchdistance) {
-
-						acceptSeconddaughter = true;
-						seconddaughter = secondclosestspot.getB();
-
-					}
-
-			} while (!acceptFirstdaughter && !acceptSeconddaughter || spotsIt.iterator().hasNext());
-
-				if (acceptFirstdaughter && acceptSeconddaughter) {
-					
-					System.out.println(firstdaughter.ID() + " " + seconddaughter.ID() + "mother" + motherspot.ID());
-
-					// We have to get rid of this trackID and the trackID of the daughters
-					MitosisIDs.add(trackID);
-					graph.addVertex(firstdaughter);
-					graph.addVertex(seconddaughter);
-					int firstdaughtertrackID = trackmodel.trackIDOf(firstdaughter);
-					int seconddaughtertrackID = trackmodel.trackIDOf(seconddaughter);
-					
-					
-					
-					// If we are in here we have found the closest two spots to create links to, now
-					// we get their track ID
-
-					// Get the backward track of the mother from { #startingspot}
-
-					Set<DefaultWeightedEdge> startmothertrack = trackmodel.trackEdges(trackID);
-					for ( final DefaultWeightedEdge edge : startmothertrack )
-					{
+					logger.setProgress((float) (count) / Apoptosisspots.size());
+					Set<DefaultWeightedEdge> killertrack = trackmodel.trackEdges(trackID);
+					for (final DefaultWeightedEdge edge : killertrack) {
 						final Spot source = trackmodel.getEdgeSource(edge);
-						
-						final Spot target = trackmodel.getEdgeTarget(edge);
-						
 						graph.addVertex(source);
-						graph.addVertex(target);
-						final DefaultWeightedEdge newedge = graph.addEdge(source, target);
-						graph.setEdgeWeight(newedge, -1);
-						if(source==motherspot) 
-						   break;
-						
-						
-					}
-					
-					// Get the forward track of the first daughter
-					Set<DefaultWeightedEdge> firstdaughtertrack = trackmodel.trackEdges(firstdaughtertrackID);
+						if (source != killerspot) {
 
-					// Get the forward track of the second daughter
-					Set<DefaultWeightedEdge> seconddaughtertrack = trackmodel.trackEdges(seconddaughtertrackID);
-             
-					// Mitosis daughters have to break previous connections so can not be target of a spot
-					for ( final DefaultWeightedEdge edge : firstdaughtertrack )
-					{
-						final Spot source = trackmodel.getEdgeSource(edge);
-						final Spot target = trackmodel.getEdgeTarget(edge);
-						
-						if(source==firstdaughter) {
-						
-						graph.addVertex(source);
-						graph.addVertex(target);
-						final DefaultWeightedEdge newedge = graph.addEdge(source, target);
-						
-						graph.setEdgeWeight(newedge, -1);
-						
+							final Spot target = trackmodel.getEdgeTarget(edge);
+							graph.addVertex(target);
+							final DefaultWeightedEdge newedge = graph.addEdge(source, target);
+							graph.setEdgeWeight(newedge, -1);
 						}
 					}
-					
-					
-					for ( final DefaultWeightedEdge edge : seconddaughtertrack )
-					{
-						final Spot source = trackmodel.getEdgeSource(edge);
-						final Spot target = trackmodel.getEdgeTarget(edge);
-						if(source==seconddaughter) {
-							
-						
-						graph.addVertex(source);
-						graph.addVertex(target);
-						final DefaultWeightedEdge newedge = graph.addEdge(source, target);
-						
-						graph.setEdgeWeight(newedge, -1);
-					}
-					
-					}
-					
-					
-					
-					
-					// Establish the connection between the split spot and daughters
-					final DefaultWeightedEdge firstdaughteredge = graph.addEdge(motherspot, firstdaughter);
-					graph.setEdgeWeight(firstdaughteredge, -1);
-					final DefaultWeightedEdge seconddaughteredge = graph.addEdge(motherspot, seconddaughter);
-					graph.setEdgeWeight(seconddaughteredge, -1);
-					
-					
 
 				}
 
 			}
+
 		}
+
+		count = 0;
+		if (createlinks) {
+			logger.log("Creating mitosis links.\n");
+			// Lets take care of mitosis
+			if (Mitosisspots != null)
+				for (Map.Entry<Integer, Pair<ArrayList<Spot>, Spot>> trackidspots : Mitosisspots.entrySet()) {
+
+					// Get the current trackID
+					int trackID = trackidspots.getKey();
+					System.out.println("Track ID" + trackID);
+					Pair<ArrayList<Spot>, Spot> trackspots = trackidspots.getValue();
+
+					count++;
+
+					for (Spot motherspot : trackspots.getA()) {
+
+						Boolean acceptFirstdaughter = false;
+						Boolean acceptSeconddaughter = false;
+						logger.setProgress((float) (count) / Mitosisspots.size());
+						// Get the location of spot in current frame
+						int currentframe = motherspot.getFeature(FRAME).intValue();
+						double mothersize = motherspot.getFeature(QUALITY);
+						long[] location = new long[ndim];
+						for (int d = 0; d < ndim; ++d)
+							location[d] = (long) motherspot.getDoublePosition(d);
+
+						// Get spots in the next frame
+
+						Spot firstdaughter = null;
+						Spot seconddaughter = null;
+
+						SpotCollection regionspots = regionspot(allspots, motherspot, currentframe + 1, searchdistance);
+
+						// Get the closest trackmate spot in the next frame
+
+						do {
+							// Pair<Double, Spot> firstclosestspot =
+							if (regionspots.getNSpots(false) == 1)
+								break;
+							Spot closestspot = regionspots.getClosestSpot(motherspot, currentframe + 1, false);
+							if (closestspot.getFeature(QUALITY) / mothersize <= motherdaughtersize
+									&& acceptFirstdaughter == false) {
+
+								acceptFirstdaughter = true;
+								firstdaughter = closestspot;
+
+							}
+
+							regionspots.remove(closestspot, currentframe + 1);
+
+							closestspot = regionspots.getClosestSpot(motherspot, currentframe + 1, false);
+							if (closestspot.getFeature(QUALITY) / mothersize <= motherdaughtersize
+									&& acceptSeconddaughter == false) {
+
+								acceptSeconddaughter = true;
+								seconddaughter = closestspot;
+
+							}
+
+						} while (!acceptFirstdaughter && !acceptSeconddaughter);
+
+						if (acceptFirstdaughter && acceptSeconddaughter) {
+
+							System.out.println(firstdaughter.ID());
+							System.out.println(seconddaughter.ID());
+							System.out.println("mother" + motherspot.ID());
+
+							// We have to get rid of this trackID and the trackID of the daughters
+							MitosisIDs.add(trackID);
+
+							// If we are in here we have found the closest two spots to create links to, now
+							// we get their track ID
+
+							// Get the backward track of the mother from { #startingspot}
+							GraphIterator<Spot, DefaultWeightedEdge> rootiterator = trackmodel
+									.getDepthFirstIterator(trackspots.getB(), true);
+							
+							while (rootiterator.hasNext()) {
+
+								Spot source = rootiterator.next();
+								
+								graph.addVertex(source);
+								if (source == motherspot)
+									break;
+								if (rootiterator.hasNext()) {
+
+									Spot target = rootiterator.next();
+									graph.addVertex(target);
+
+									System.out.println(source.ID() + " " + target.ID() + "root"); 
+									final DefaultWeightedEdge newedge = graph.addEdge(source, target);
+
+									graph.setEdgeWeight(newedge, -1);
+								}
+
+							}
+						
+
+							GraphIterator<Spot, DefaultWeightedEdge> firstdaughteriterator = trackmodel
+									.getDepthFirstIterator(firstdaughter, true);
+							GraphIterator<Spot, DefaultWeightedEdge> seconddaughteriterator = trackmodel
+									.getDepthFirstIterator(seconddaughter, true);
+
+							while (firstdaughteriterator.hasNext()) {
+
+								Spot source = firstdaughteriterator.next();
+								graph.addVertex(source);
+								if (firstdaughteriterator.hasNext()) {
+
+									Spot target = firstdaughteriterator.next();
+									graph.addVertex(target);
+									System.out.println(source.ID() + " " + target.ID() + "fd"); 
+									final DefaultWeightedEdge newedge = graph.addEdge(source, target);
+
+									graph.setEdgeWeight(newedge, -1);
+								}
+
+							}
+
+							while (seconddaughteriterator.hasNext()) {
+
+								Spot source = seconddaughteriterator.next();
+								graph.addVertex(source);
+								if (seconddaughteriterator.hasNext()) {
+
+									Spot target = seconddaughteriterator.next();
+									graph.addVertex(target);
+									System.out.println(source.ID() + " " + target.ID() + "sd"); 
+									final DefaultWeightedEdge newedge = graph.addEdge(source, target);
+
+									graph.setEdgeWeight(newedge, -1);
+								}
+
+							}
+
+							System.out.println("mf" + motherspot.ID() + " " + firstdaughter.ID());
+							System.out.println("ms" + motherspot.ID() + " " + seconddaughter.ID());
+							// Establish the connection between the split spot and daughters
+							final DefaultWeightedEdge firstdaughteredge = graph.addEdge(motherspot, firstdaughter);
+							graph.setEdgeWeight(firstdaughteredge, -1);
+							final DefaultWeightedEdge seconddaughteredge = graph.addEdge(motherspot, seconddaughter);
+							graph.setEdgeWeight(seconddaughteredge, -1);
+
+						}
+
+					}
+				}
 		}
-		
-		//Lets take care of no event tracks
+
+		// Lets take care of no event tracks
 		AlltrackIDs.removeAll(ApoptosisIDs);
 		AlltrackIDs.removeAll(MitosisIDs);
-		
+
 		for (int trackID : AlltrackIDs) {
-			
-				// Nothing special here just mantaining the normal links found
-				Set<DefaultWeightedEdge> normaltracks = trackmodel.trackEdges(trackID);
-				for ( final DefaultWeightedEdge edge : normaltracks )
-				{
-					final Spot source = trackmodel.getEdgeSource(edge);
-					final Spot target = trackmodel.getEdgeTarget(edge);
-					graph.addVertex(source);
-					graph.addVertex(target);
-					final DefaultWeightedEdge newedge = graph.addEdge(source, target);
-					graph.setEdgeWeight(newedge, -1);
-					
-				}
-				
-			
-			
-			
+
+			// Nothing special here just mantaining the normal links found
+			Set<DefaultWeightedEdge> normaltracks = trackmodel.trackEdges(trackID);
+			for (final DefaultWeightedEdge edge : normaltracks) {
+				final Spot source = trackmodel.getEdgeSource(edge);
+				final Spot target = trackmodel.getEdgeTarget(edge);
+				graph.addVertex(source);
+				graph.addVertex(target);
+				final DefaultWeightedEdge newedge = graph.addEdge(source, target);
+				graph.setEdgeWeight(newedge, -1);
+
+			}
+
 		}
-		
-		
-		
+
 		return graph;
 
 	}
 
-	private static Iterable<Spot> regionspot(Iterable<Spot> spotsIt, Spot motherspot, double region) {
-		
-		Iterator<Spot> spots = spotsIt.iterator();
-		Set<Spot> closespots = new HashSet<Spot>();
+	private static SpotCollection regionspot(SpotCollection allspots, Spot motherspot, int frame, double region) {
 
-		while (spots.hasNext()) {
-			Spot currentspot = spots.next();
+		SpotCollection regionspots = new SpotCollection();
+		for (Spot spot : allspots.iterable(frame, false)) {
 
-			if (currentspot.squareDistanceTo(motherspot) <= region * region)
-				closespots.add(currentspot);
-				
-			
+			if (motherspot.squareDistanceTo(spot) < region * region) {
+
+				regionspots.add(spot, frame);
+
+			}
+
 		}
 
-		
-		return closespots;
-		
+		return regionspots;
 	}
-	
+
 	private static Iterable<Spot> removespot(Iterable<Spot> spotsIt, Spot removespot) {
 
 		Iterator<Spot> spots = spotsIt.iterator();
@@ -334,95 +311,90 @@ public class TrackCorrectorRunner {
 			if (currentspot.hashCode() == (removespot.hashCode()))
 				spots.remove();
 			else
-			   removespots.add(currentspot);
+				removespots.add(currentspot);
 		}
 
-		
 		return removespots;
 
 	}
-	
-	public static < T extends RealType< T > & NativeType< T > > HashMap<Integer, Pair<ArrayList<Spot>, Spot>> getTrackID(final Model model,
-			final ImgPlus<IntType> intimg, HashMap<Integer, ArrayList<Spot>> framespots, final boolean checkdivision,
-			final int timegap, final int detectionchannel, final Logger logger) {
+
+	public static <T extends RealType<T> & NativeType<T>> HashMap<Integer, Pair<ArrayList<Spot>, Spot>> getTrackID(
+			final Model model, final ImgPlus<IntType> intimg, HashMap<Integer, ArrayList<Spot>> framespots,
+			final boolean checkdivision, final int timegap, final int detectionchannel, final Logger logger) {
 
 		HashMap<Integer, ArrayList<Spot>> Mitosisspots = new HashMap<Integer, ArrayList<Spot>>();
 		HashMap<Integer, Pair<ArrayList<Spot>, Spot>> TrackIDstartspots = new HashMap<Integer, Pair<ArrayList<Spot>, Spot>>();
 		// Spots from trackmate
-		
-			
+
 		int ndim = intimg.numDimensions() - 1;
-		
+
 		RandomAccess<IntType> ranac = intimg.randomAccess();
-		
-		
+
 		Set<Integer> AllTrackIds = model.getTrackModel().trackIDs(false);
-		HashMap<String, Pair<Spot, Integer>> uniquelabelID = new HashMap<String, Pair<Spot, Integer>>(); 
+		HashMap<String, Pair<Spot, Integer>> uniquelabelID = new HashMap<String, Pair<Spot, Integer>>();
 		logger.flush();
-		logger.log( "Collecting tracks, in total " + AllTrackIds.size() +  ".\n" );
+		logger.log("Collecting tracks, in total " + AllTrackIds.size() + ".\n");
 		int count = 0;
-		for(int trackID: AllTrackIds) {
-			
+		for (int trackID : AllTrackIds) {
+
 			Set<Spot> trackspots = model.getTrackModel().trackSpots(trackID);
 			count++;
-			for(Spot spot: trackspots) {
-				
-				
-				logger.setProgress( ( float ) ( count ) / AllTrackIds.size() );
-				
+			for (Spot spot : trackspots) {
+
+				logger.setProgress((float) (count) / AllTrackIds.size());
+
 				int time = spot.getFeature(FRAME).intValue();
 				if (time < intimg.dimension(ndim) - 1) {
-				long[] location = new long[ndim];
-				long[] timelocation = new long[ndim + 1];
-				for (int d = 0; d < ndim; ++d) {
-					location[d] = (long) spot.getDoublePosition(d);
-					timelocation[d] = location[d];
+					long[] location = new long[ndim];
+					long[] timelocation = new long[ndim + 1];
+					for (int d = 0; d < ndim; ++d) {
+						location[d] = (long) spot.getDoublePosition(d);
+						timelocation[d] = location[d];
+					}
+					timelocation[ndim] = time;
+					ranac.setPosition(timelocation);
+					int label = ranac.get().get();
+
+					String uniqueID = Integer.toString(label) + Integer.toString(time);
+					uniquelabelID.put(uniqueID, new ValuePair<Spot, Integer>(spot, trackID));
+
 				}
-				timelocation[ndim] = time;
-				ranac.setPosition(timelocation);
-				int label = ranac.get().get();
-				
-				String uniqueID = Integer.toString(label) + Integer.toString(time);
-				uniquelabelID.put(uniqueID, new ValuePair<Spot, Integer> (spot, trackID));
-				
-			}
 			}
 		}
-		
-		logger.log( "Matching with oneat spots.\n" );
-		logger.setProgress( 0. );
+
+		logger.log("Matching with oneat spots.\n");
+		logger.setProgress(0.);
 		count = 0;
-		
-		
+
 		for (Map.Entry<Integer, ArrayList<Spot>> framemap : framespots.entrySet()) {
 
 			int frame = framemap.getKey();
 			if (frame < intimg.dimension(ndim) - 1) {
 				count++;
-				
-			ArrayList<Spot> spotlist = framemap.getValue();
 
-			for (Spot currentspots : spotlist) {
-				
-				logger.setProgress( ( float ) ( count ) / framespots.size() );
+				ArrayList<Spot> spotlist = framemap.getValue();
 
-				long[] location = new long[ndim];
-				long[] timelocation = new long[ndim + 1];
-				for (int d = 0; d < ndim; ++d) {
-					location[d] = (long) currentspots.getDoublePosition(d);
-					timelocation[d] = location[d];
-				}
-				timelocation[ndim] = frame;
-				ranac.setPosition(timelocation);
-				// Get the label ID of the current interesting spot
-				int labelID = ranac.get().get();
+				for (Spot currentspots : spotlist) {
 
-				String uniqueID = Integer.toString(labelID) + Integer.toString(frame);
-				if(uniquelabelID.containsKey(uniqueID)) {
-				Pair<Spot, Integer> spotandtrackID = uniquelabelID.get(uniqueID);
-				// Now get the spot ID
+					logger.setProgress((float) (count) / framespots.size());
 
-				Spot spot = spotandtrackID.getA();
+					long[] location = new long[ndim];
+					long[] timelocation = new long[ndim + 1];
+					for (int d = 0; d < ndim; ++d) {
+						location[d] = (long) currentspots.getDoublePosition(d);
+						timelocation[d] = location[d];
+					}
+					timelocation[ndim] = frame;
+					ranac.setPosition(timelocation);
+					// Get the label ID of the current interesting spot
+					int labelID = ranac.get().get();
+
+					String uniqueID = Integer.toString(labelID) + Integer.toString(frame);
+					if (uniquelabelID.containsKey(uniqueID)) {
+						Pair<Spot, Integer> spotandtrackID = uniquelabelID.get(uniqueID);
+						// Now get the spot ID
+
+						Spot spot = spotandtrackID.getA();
 
 						int trackID = spotandtrackID.getB();
 						Pair<Boolean, Pair<Spot, Spot>> isDividingTMspot = isDividingTrack(spot, trackID, timegap,
@@ -437,16 +409,19 @@ public class TrackCorrectorRunner {
 							if (Mitosisspots.containsKey(trackID)) {
 
 								ArrayList<Spot> trackspotlist = Mitosisspots.get(trackID);
+								if(!trackspotlist.contains(spot))
 								trackspotlist.add(spot);
 								Mitosisspots.put(trackID, trackspotlist);
-								Pair<ArrayList<Spot>, Spot> pairlist = new ValuePair<ArrayList<Spot>, Spot>(trackspotlist,startspot);
+								Pair<ArrayList<Spot>, Spot> pairlist = new ValuePair<ArrayList<Spot>, Spot>(
+										trackspotlist, startspot);
 								TrackIDstartspots.put(trackID, pairlist);
 							} else {
 
 								ArrayList<Spot> trackspotlist = new ArrayList<Spot>();
 								trackspotlist.add(spot);
 								Mitosisspots.put(trackID, trackspotlist);
-								Pair<ArrayList<Spot>, Spot> pairlist = new ValuePair<ArrayList<Spot>, Spot>(trackspotlist,startspot);
+								Pair<ArrayList<Spot>, Spot> pairlist = new ValuePair<ArrayList<Spot>, Spot>(
+										trackspotlist, startspot);
 								TrackIDstartspots.put(trackID, pairlist);
 							}
 
@@ -459,22 +434,23 @@ public class TrackCorrectorRunner {
 							if (Mitosisspots.containsKey(trackID)) {
 
 								ArrayList<Spot> trackspotlist = Mitosisspots.get(trackID);
+								if(!trackspotlist.contains(spot))
 								trackspotlist.add(spot);
 								Mitosisspots.put(trackID, trackspotlist);
-								Pair<ArrayList<Spot>, Spot> pairlist = new ValuePair<ArrayList<Spot>, Spot>(trackspotlist,startspot);
+								Pair<ArrayList<Spot>, Spot> pairlist = new ValuePair<ArrayList<Spot>, Spot>(
+										trackspotlist, startspot);
 								TrackIDstartspots.put(trackID, pairlist);
 							} else {
 
 								ArrayList<Spot> trackspotlist = new ArrayList<Spot>();
 								trackspotlist.add(spot);
 								Mitosisspots.put(trackID, trackspotlist);
-								Pair<ArrayList<Spot>, Spot> pairlist = new ValuePair<ArrayList<Spot>, Spot>(trackspotlist,startspot);
+								Pair<ArrayList<Spot>, Spot> pairlist = new ValuePair<ArrayList<Spot>, Spot>(
+										trackspotlist, startspot);
 								TrackIDstartspots.put(trackID, pairlist);
 							}
 
 						}
-						
-						
 
 					}
 				}
@@ -482,10 +458,9 @@ public class TrackCorrectorRunner {
 			}
 		}
 
-		logger.log( "Verifying lineage trees.\n" );
-		logger.setProgress( 0. );
+		logger.log("Verifying lineage trees.\n");
+		logger.setProgress(0.);
 
-		
 		return TrackIDstartspots;
 	}
 
@@ -678,7 +653,7 @@ public class TrackCorrectorRunner {
 
 					if (count > 0) {
 
-						int time = (int)Double.parseDouble(divisionspotsfile[0]);
+						int time = (int) Double.parseDouble(divisionspotsfile[0]);
 						double Z = Double.parseDouble(divisionspotsfile[1]);
 						double Y = Double.parseDouble(divisionspotsfile[2]);
 						double X = Double.parseDouble(divisionspotsfile[3]);
@@ -769,7 +744,7 @@ public class TrackCorrectorRunner {
 						double confidence = Double.parseDouble(apoptosisspotsfile[6]);
 						double angle = Double.parseDouble(apoptosisspotsfile[7]);
 
-						Oneatobject Spot = new Oneatobject(time, Z,Y,X, score, size, confidence, angle);
+						Oneatobject Spot = new Oneatobject(time, Z, Y, X, score, size, confidence, angle);
 
 						if (ApoptosisMap.get(time) == null) {
 							ApoptosisSpots = new ArrayList<Oneatobject>();
