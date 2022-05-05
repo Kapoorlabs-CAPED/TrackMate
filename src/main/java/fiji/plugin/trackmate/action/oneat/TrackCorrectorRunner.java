@@ -343,19 +343,15 @@ public class TrackCorrectorRunner {
 				int frame = spot.getFeature(FRAME).intValue();
 				if (frame < intimg.dimension(ndim) - 1) {
 					long[] location = new long[ndim];
-					long[] timelocation = new long[ndim + 1];
 					for (int d = 0; d < ndim; ++d) {
-						location[d] = (long) spot.getDoublePosition(d);
-						timelocation[d] = (long) (location[d]/calibration[d]);
+						location[d] = (long) (spot.getDoublePosition(d)/calibration[d]);
 						ranac.setPosition(location[d], d);
 					}
-					timelocation[ndim] = frame;
 					
 					ranac.setPosition(frame, ndim);
 					int label = ranac.get().get();
 
 					System.out.println(label);
-					String uniqueID = Integer.toString(label);
 					uniquelabelID.put(new ValuePair<Integer, Integer> (label, frame), new ValuePair<Spot, Integer>(spot, trackID));
 
 				}
@@ -379,13 +375,10 @@ public class TrackCorrectorRunner {
 					logger.setProgress((float) (count) / framespots.size());
 
 					long[] location = new long[ndim];
-					long[] timelocation = new long[ndim + 1];
 					for (int d = 0; d < ndim; ++d) {
-						location[d] = (long) currentspots.getDoublePosition(d);
-						timelocation[d] = location[d];
+						location[d] = (long) (currentspots.getDoublePosition(d)/calibration[d]);
 						ranac.setPosition(location[d], d);
 					}
-					timelocation[ndim] = frame;
 					ranac.setPosition(frame, ndim);
 					// Get the label ID of the current interesting spot
 					int labelID = ranac.get().get();
@@ -397,7 +390,10 @@ public class TrackCorrectorRunner {
 
 						Spot spot = spotandtrackID.getA();
 						
-					
+						System.out.println("Oneat" + labelID + " "+ currentspots.getFeature(FRAME) + " " + currentspots.getFeature(POSITION_X) +  " "+ currentspots.getFeature(POSITION_Y)+ 
+								" " + currentspots.getFeature(POSITION_Z) + " " + "TM" + " "  + spot.getFeature(FRAME) + " " + spot.getFeature(POSITION_X) 
+								+  " "+ spot.getFeature(POSITION_Y)+ 
+								" " + spot.getFeature(POSITION_Z  ) );
 						
 
 						int trackID = spotandtrackID.getB();

@@ -188,7 +188,7 @@ public class TrackMatePlugIn implements PlugIn
 		UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
 		ImageJ.main( args );
 //		new TrackMatePlugIn().run( "samples/Stack.tif" );
-		new TrackMatePlugIn().run( "C:\\Users\\rando\\Downloads\\TrackMate_oneat_test\\TrackMate_oneat_uncal.tif" );
+		new TrackMatePlugIn().run( "C:\\Users\\rando\\Downloads\\TrackMate_oneat_test\\TrackMate_oneat.tif" );
 		//new TrackMatePlugIn().run( "samples/MAX_Merged.tif" );
 //		new TrackMatePlugIn().run( "samples/Mask.tif" );
 //		new TrackMatePlugIn().run( "samples/FakeTracks.tif" );
