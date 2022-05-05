@@ -26,6 +26,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackModel;
+import fiji.plugin.trackmate.tracking.sparselap.costmatrix.JaqamanSegmentCostMatrixCreator;
 import fiji.plugin.trackmate.util.TMUtils;
 import net.imglib2.util.Util;
 import net.imagej.ImgPlus;
@@ -120,36 +121,43 @@ public class TrackCorrectorRunner {
 
 					// Get the current trackID
 					int trackID = trackidspots.getKey();
-					System.out.println("Track ID" + trackID);
+					// List of all the mother cells and the root of the lineage tree
 					Pair<ArrayList<Spot>, Spot> trackspots = trackidspots.getValue();
-
+                    Spot rootspot = trackspots.getB(); 
 					count++;
 
 					for (Spot motherspot : trackspots.getA()) {
 
-						Boolean acceptFirstdaughter = false;
-						Boolean acceptSeconddaughter = false;
-						logger.setProgress((float) (count) / Mitosisspots.size());
-						// Get the location of spot in current frame
 						int currentframe = motherspot.getFeature(FRAME).intValue();
 						double mothersize = motherspot.getFeature(QUALITY);
-						long[] location = new long[ndim];
-						for (int d = 0; d < ndim; ++d)
-							location[d] = (long) motherspot.getDoublePosition(d);
-
-						// Get spots in the next frame
-
-						Spot firstdaughter = null;
-						Spot seconddaughter = null;
-
+						// Get all the spots in the next frame in the local region
 						SpotCollection regionspots = regionspot(allspots, motherspot, currentframe + 1, searchdistance);
 
-						// Use the segment linker of TrackMate to link segments
+						// Set of spots in mother track
+						
+						GraphIterator<Spot, DefaultWeightedEdge> rootiterator = 
+								trackmodel.getDepthFirstIterator(rootspot, true);
+						GraphIterator<Spot, DefaultWeightedEdge> motheriterator = 
+								trackmodel.getDepthFirstIterator(motherspot, true);
+						for(Spot regionalspot: regionspots.iterable(false)) {
+							
+							// ALl the candidates for segment linking
+							GraphIterator<Spot, DefaultWeightedEdge> regionspotiterator = 
+									trackmodel.getDepthFirstIterator(regionalspot, true);
+							
+						}
+						// Create the local graph in this region and create the cost matrix to find
+						// local links
 
+						logger.setStatus("Creating the segment linking cost matrix...");
+						final JaqamanSegmentCostMatrixCreator costMatrixCreator = new JaqamanSegmentCostMatrixCreator(
+								graph, settings);
+
+						costMatrixCreator.setNumThreads(numThreads);
 
 					}
 				}
-		}
+		    }
 
 		// Lets take care of no event tracks
 		AlltrackIDs.removeAll(ApoptosisIDs);
@@ -218,7 +226,7 @@ public class TrackCorrectorRunner {
 		// Spots from trackmate
 
 		int ndim = intimg.numDimensions() - 1;
-        int tmoneatdeltat = (int) mapsettings.get(KEY_TIME_GAP);
+		int tmoneatdeltat = (int) mapsettings.get(KEY_TIME_GAP);
 		RandomAccess<IntType> ranac = intimg.randomAccess();
 
 		Set<Integer> AllTrackIds = model.getTrackModel().trackIDs(false);
@@ -300,8 +308,8 @@ public class TrackCorrectorRunner {
 							if (Mitosisspots.containsKey(trackID)) {
 
 								ArrayList<Spot> trackspotlist = Mitosisspots.get(trackID);
-								if(!trackspotlist.contains(spot))
-								trackspotlist.add(spot);
+								if (!trackspotlist.contains(spot))
+									trackspotlist.add(spot);
 								Mitosisspots.put(trackID, trackspotlist);
 								Pair<ArrayList<Spot>, Spot> pairlist = new ValuePair<ArrayList<Spot>, Spot>(
 										trackspotlist, startspot);
@@ -325,8 +333,8 @@ public class TrackCorrectorRunner {
 							if (Mitosisspots.containsKey(trackID)) {
 
 								ArrayList<Spot> trackspotlist = Mitosisspots.get(trackID);
-								if(!trackspotlist.contains(spot))
-								trackspotlist.add(spot);
+								if (!trackspotlist.contains(spot))
+									trackspotlist.add(spot);
 								Mitosisspots.put(trackID, trackspotlist);
 								Pair<ArrayList<Spot>, Spot> pairlist = new ValuePair<ArrayList<Spot>, Spot>(
 										trackspotlist, startspot);
