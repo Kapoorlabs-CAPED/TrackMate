@@ -150,7 +150,7 @@ public class OneatCorrector implements TrackCorrector {
 		if(divisionspots.keySet().size() > 0) {
 			
 			// This object contains the track ID and a list of split points and the root of the lineage tree
-			Mitossisspots = TrackCorrectorRunner.getTrackID(model, img, divisionframespots, true, timegap, detectionchannel, logger);
+			Mitossisspots = TrackCorrectorRunner.getTrackID(model, img, divisionframespots, settings, true, logger);
 			
 			
 			// To be safe let us sort the split points in ascending order of frame
@@ -169,7 +169,7 @@ public class OneatCorrector implements TrackCorrector {
         if(apoptosisspots.keySet().size() > 0) {
 			
         	// This object contains the track ID and a list of single object with the apoptotic spot where the track has to terminate and the root of the lineage tree
-			Apoptosisspots = TrackCorrectorRunner.getTrackID( model, img, apoptosisframespots, false, timegap, detectionchannel, logger); 
+			Apoptosisspots = TrackCorrectorRunner.getTrackID( model, img, apoptosisframespots, settings, false, logger); 
 			
 			// To be safe let us sort the dead points in ascending order of frame
 			

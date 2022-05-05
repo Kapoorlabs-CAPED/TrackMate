@@ -60,7 +60,6 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 	
 	private static int detchannel = 1;
 	
-	private double sizeratio = 0.75;
 	
 	private double linkdist = 50;
 	
@@ -68,13 +67,17 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 	
 	private int tracklet = 2;
 	
-
+	private boolean breaklinks = true;
+	
+	private boolean createlinks = false;
 	
 	@Override
 	public void execute(TrackMate trackmate, SelectionModel selectionModel, DisplaySettings displaySettings,
 			Frame gui) {
 		
 		Settings settings = trackmate.getSettings();
+	
+		Map<String, Object> trackmapsettings = settings.trackerSettings;
 		Model model = trackmate.getModel();
 		final ImgPlus<T> img = TMUtils.rawWraps( settings.imp );
 		
@@ -91,13 +94,12 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 			File oneatapotosisfile = panel.getApoptosisFile();
 			tracklet = panel.getMinTracklet();
 			deltat = panel.getTimeGap();
-			sizeratio = panel.getSizeRatio();
-			boolean breaklinks = panel.getBreakLinks();
-			boolean createlinks = panel.getCreateLinks();
+			breaklinks = panel.getBreakLinks();
+			createlinks = panel.getCreateLinks();
 			detchannel = panel.getDetectionChannel();
 			linkdist = panel.getLinkDist();
 			
-			Map<String, Object> mapsettings = getSettings(oneatdivisionfile,oneatapotosisfile,tracklet,deltat,sizeratio,breaklinks,createlinks,detchannel,linkdist );
+			Map<String, Object> mapsettings = getSettings(oneatdivisionfile,oneatapotosisfile,trackmapsettings);
 			OneatCorrectorFactory corrector = new OneatCorrectorFactory();
 			ImgPlus <T> detectionimg =  img;
 			if (img.dimensionIndex(Axes.CHANNEL) > 0) 
@@ -130,14 +132,19 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 		
 	}
 	
-	public Map<String, Object> getSettings(File oneatdivisionfile, File oneatapoptosisfile, int tracklet, int deltat, double sizeratio, boolean breaklinks, boolean createlinks, int detchannel, double linkdist  ) {
+	public Map<String, Object> getSettings(File oneatdivisionfile, File oneatapoptosisfile, Map<String, Object> trackmapsettings ) {
 		final Map<String, Object> settings = new HashMap<>();
 
+		// Get all the available tracker keys previously set
+		for( Map.Entry<String, Object> trackkeys :  trackmapsettings.entrySet()) 
+			
+			
+			settings.put(trackkeys.getKey(), trackkeys.getValue());
+		
 		settings.put(DIVISION_FILE, oneatdivisionfile);
-		settings.put(APOPTOSIS_FILE, oneatapoptosisfile);
+		settings.put(APOPTOSIS_FILE, oneatapoptosisfile); 
 		settings.put(KEY_TRACKLET_LENGTH, tracklet);
 		settings.put(KEY_TIME_GAP, deltat);
-		settings.put(KEY_SIZE_RATIO, sizeratio);
 		settings.put(KEY_BREAK_LINKS, breaklinks);
 		settings.put(KEY_CREATE_LINKS, createlinks);
 		settings.put(KEY_TARGET_CHANNEL, detchannel);

@@ -32,8 +32,6 @@ import javax.swing.filechooser.FileFilter;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 
-
-
 import static fiji.plugin.trackmate.gui.Fonts.SMALL_FONT;
 
 public class OneatExporterPanel extends JPanel {
@@ -54,7 +52,6 @@ public class OneatExporterPanel extends JPanel {
 	private JFormattedTextField MinTracklet;
 	private JFormattedTextField DetectionChannel;
 	private JFormattedTextField TimeGap;
-	private JFormattedTextField MotherDaughterSizeRatio;
 	private JFormattedTextField MotherDaughterLinkDist;
 
 	private JCheckBox CreateNewLinks;
@@ -128,25 +125,7 @@ public class OneatExporterPanel extends JPanel {
 		add( lblMotherDaughterSizeRatio, gbc );
 		gbc.gridx++;
 		
-		MotherDaughterSizeRatio = new JFormattedTextField();
-		MotherDaughterSizeRatio.setValue(sizeratio);
-		MotherDaughterSizeRatio.setFont(new Font("Arial", Font.PLAIN, 10));
-		MotherDaughterSizeRatio.setColumns(4);
-		add(MotherDaughterSizeRatio, gbc);
-		gbc.gridy++;
-		gbc.gridx--;
-		
-		final JLabel lblMotherDaughterLinkDist = new JLabel( "Linking distance between mother/daughter:" );
-		add( lblMotherDaughterLinkDist, gbc );
-		gbc.gridx++;
-		
-		MotherDaughterLinkDist = new JFormattedTextField();
-		MotherDaughterLinkDist.setValue(linkdist);
-		MotherDaughterLinkDist.setFont(new Font("Arial", Font.PLAIN, 10));
-		MotherDaughterLinkDist.setColumns(4);
-		add(MotherDaughterLinkDist, gbc);
-		gbc.gridy++;
-		gbc.gridx--;
+	
 		
 		CreateNewLinks = new JCheckBox("Create new mitosis events (Verified by oneat, missed by TM) ");
 		CreateNewLinks.setSelected(createlinks);
@@ -252,15 +231,7 @@ public class OneatExporterPanel extends JPanel {
 		});
 		
 		
-		MotherDaughterSizeRatio.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				
-				sizeratio = ( ( Number ) MotherDaughterSizeRatio.getValue() ).doubleValue();
-				
-			}
-		});
+		
 		
 		
 		CreateNewLinks.addItemListener(new ItemListener() {

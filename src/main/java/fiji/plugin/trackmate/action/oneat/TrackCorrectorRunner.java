@@ -50,8 +50,8 @@ import static fiji.plugin.trackmate.Spot.FRAME;
 import static fiji.plugin.trackmate.Spot.RADIUS;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_BREAK_LINKS;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_CREATE_LINKS;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TIME_GAP;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_LINKING_MAX_DISTANCE;
-import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_SIZE_RATIO;
 import static fiji.plugin.trackmate.Spot.QUALITY;
 
 public class TrackCorrectorRunner {
@@ -69,8 +69,8 @@ public class TrackCorrectorRunner {
 		SpotCollection allspots = model.getSpots();
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
-		double motherdaughtersize = (double) settings.get(KEY_SIZE_RATIO);
 		double searchdistance = (double) settings.get(KEY_LINKING_MAX_DISTANCE);
+		int tmoneatdeltat = (int) settings.get(KEY_TIME_GAP);
 		boolean createlinks = (boolean) settings.get(KEY_CREATE_LINKS);
 		boolean breaklinks = (boolean) settings.get(KEY_BREAK_LINKS);
 		Set<Integer> AlltrackIDs = trackmodel.trackIDs(false);
@@ -144,117 +144,8 @@ public class TrackCorrectorRunner {
 
 						SpotCollection regionspots = regionspot(allspots, motherspot, currentframe + 1, searchdistance);
 
-						// Get the closest trackmate spot in the next frame
+						// Use the segment linker of TrackMate to link segments
 
-						do {
-							// Pair<Double, Spot> firstclosestspot =
-							if (regionspots.getNSpots(false) == 1)
-								break;
-							Spot closestspot = regionspots.getClosestSpot(motherspot, currentframe + 1, false);
-							if (closestspot.getFeature(QUALITY) / mothersize <= motherdaughtersize
-									&& acceptFirstdaughter == false) {
-
-								acceptFirstdaughter = true;
-								firstdaughter = closestspot;
-
-							}
-
-							regionspots.remove(closestspot, currentframe + 1);
-
-							closestspot = regionspots.getClosestSpot(motherspot, currentframe + 1, false);
-							if (closestspot.getFeature(QUALITY) / mothersize <= motherdaughtersize
-									&& acceptSeconddaughter == false) {
-
-								acceptSeconddaughter = true;
-								seconddaughter = closestspot;
-
-							}
-
-						} while (!acceptFirstdaughter && !acceptSeconddaughter);
-
-						if (acceptFirstdaughter && acceptSeconddaughter) {
-
-							System.out.println(firstdaughter.ID());
-							System.out.println(seconddaughter.ID());
-							System.out.println("mother" + motherspot.ID());
-
-							// We have to get rid of this trackID and the trackID of the daughters
-							MitosisIDs.add(trackID);
-
-							// If we are in here we have found the closest two spots to create links to, now
-							// we get their track ID
-
-							// Get the backward track of the mother from { #startingspot}
-							GraphIterator<Spot, DefaultWeightedEdge> rootiterator = trackmodel
-									.getDepthFirstIterator(trackspots.getB(), true);
-							
-							while (rootiterator.hasNext()) {
-
-								Spot source = rootiterator.next();
-								
-								graph.addVertex(source);
-								if (source == motherspot)
-									break;
-								if (rootiterator.hasNext()) {
-
-									Spot target = rootiterator.next();
-									graph.addVertex(target);
-
-									System.out.println(source.ID() + " " + target.ID() + "root"); 
-									final DefaultWeightedEdge newedge = graph.addEdge(source, target);
-
-									graph.setEdgeWeight(newedge, -1);
-								}
-
-							}
-						
-
-							GraphIterator<Spot, DefaultWeightedEdge> firstdaughteriterator = trackmodel
-									.getDepthFirstIterator(firstdaughter, true);
-							GraphIterator<Spot, DefaultWeightedEdge> seconddaughteriterator = trackmodel
-									.getDepthFirstIterator(seconddaughter, true);
-
-							while (firstdaughteriterator.hasNext()) {
-
-								Spot source = firstdaughteriterator.next();
-								graph.addVertex(source);
-								if (firstdaughteriterator.hasNext()) {
-
-									Spot target = firstdaughteriterator.next();
-									graph.addVertex(target);
-									System.out.println(source.ID() + " " + target.ID() + "fd"); 
-									final DefaultWeightedEdge newedge = graph.addEdge(source, target);
-
-									graph.setEdgeWeight(newedge, -1);
-								}
-
-							}
-
-							while (seconddaughteriterator.hasNext()) {
-
-								Spot source = seconddaughteriterator.next();
-								graph.addVertex(source);
-								if (seconddaughteriterator.hasNext()) {
-
-									Spot target = seconddaughteriterator.next();
-									graph.addVertex(target);
-									System.out.println(source.ID() + " " + target.ID() + "sd"); 
-									final DefaultWeightedEdge newedge = graph.addEdge(source, target);
-
-									graph.setEdgeWeight(newedge, -1);
-								}
-
-							}
-
-							System.out.println("mf" + motherspot.ID() + " " + firstdaughter.ID());
-							System.out.println("ms" + motherspot.ID() + " " + seconddaughter.ID());
-							// Establish the connection between the split spot and daughters
-							final DefaultWeightedEdge firstdaughteredge = graph.addEdge(motherspot, firstdaughter);
-							graph.setEdgeWeight(firstdaughteredge, -1);
-							final DefaultWeightedEdge seconddaughteredge = graph.addEdge(motherspot, seconddaughter);
-							graph.setEdgeWeight(seconddaughteredge, -1);
-
-						}
 
 					}
 				}
@@ -320,14 +211,14 @@ public class TrackCorrectorRunner {
 
 	public static <T extends RealType<T> & NativeType<T>> HashMap<Integer, Pair<ArrayList<Spot>, Spot>> getTrackID(
 			final Model model, final ImgPlus<IntType> intimg, HashMap<Integer, ArrayList<Spot>> framespots,
-			final boolean checkdivision, final int timegap, final int detectionchannel, final Logger logger) {
+			final Map<String, Object> mapsettings, final boolean checkdivision, final Logger logger) {
 
 		HashMap<Integer, ArrayList<Spot>> Mitosisspots = new HashMap<Integer, ArrayList<Spot>>();
 		HashMap<Integer, Pair<ArrayList<Spot>, Spot>> TrackIDstartspots = new HashMap<Integer, Pair<ArrayList<Spot>, Spot>>();
 		// Spots from trackmate
 
 		int ndim = intimg.numDimensions() - 1;
-
+        int tmoneatdeltat = (int) mapsettings.get(KEY_TIME_GAP);
 		RandomAccess<IntType> ranac = intimg.randomAccess();
 
 		Set<Integer> AllTrackIds = model.getTrackModel().trackIDs(false);
@@ -397,7 +288,7 @@ public class TrackCorrectorRunner {
 						Spot spot = spotandtrackID.getA();
 
 						int trackID = spotandtrackID.getB();
-						Pair<Boolean, Pair<Spot, Spot>> isDividingTMspot = isDividingTrack(spot, trackID, timegap,
+						Pair<Boolean, Pair<Spot, Spot>> isDividingTMspot = isDividingTrack(spot, trackID, tmoneatdeltat,
 								model);
 						Boolean isDividing = isDividingTMspot.getA();
 						// If isDividing is true oneat does not need to correct the track else it has to
