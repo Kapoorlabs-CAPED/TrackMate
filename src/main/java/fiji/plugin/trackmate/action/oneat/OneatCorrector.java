@@ -148,7 +148,7 @@ public class OneatCorrector implements TrackCorrector {
 		if(divisionspots.keySet().size() > 0) {
 			
 			// This object contains the track ID and a list of split points and the root of the lineage tree
-			Mitossisspots = TrackCorrectorRunner.getTrackID(model, img, divisionframespots, settings, true, logger);
+			Mitossisspots = TrackCorrectorRunner.getTrackID(model, img, divisionframespots, settings, true, logger, calibration);
 			
 			
 			// To be safe let us sort the split points in ascending order of frame
@@ -167,7 +167,7 @@ public class OneatCorrector implements TrackCorrector {
         if(apoptosisspots.keySet().size() > 0) {
 			
         	// This object contains the track ID and a list of single object with the apoptotic spot where the track has to terminate and the root of the lineage tree
-			Apoptosisspots = TrackCorrectorRunner.getTrackID( model, img, apoptosisframespots, settings, false, logger); 
+			Apoptosisspots = TrackCorrectorRunner.getTrackID( model, img, apoptosisframespots, settings, false, logger, calibration); 
 			
 			// To be safe let us sort the dead points in ascending order of frame
 			
@@ -182,16 +182,16 @@ public class OneatCorrector implements TrackCorrector {
         
         }
         
-			graph = TrackCorrectorRunner.getCorrectedTracks(model, Mitossisspots, Apoptosisspots, settings, ndims, logger, numThreads); 	
+		//	graph = TrackCorrectorRunner.getCorrectedTracks(model, Mitossisspots, Apoptosisspots, settings, ndims, logger, numThreads); 	
 			
 			
 			// Check that the objects list itself isn't null
-			if ( null == graph )
-			{
-				errorMessage = BASE_ERROR_MESSAGE + "The output graph is null.";
-				return false;
-			}
-			
+		//	if ( null == graph )
+		//	{
+		//		errorMessage = BASE_ERROR_MESSAGE + "The output graph is null.";
+		//		return false;
+		//	}
+			/*
 			model.beginUpdate();
 			
 			
@@ -199,7 +199,7 @@ public class OneatCorrector implements TrackCorrector {
 			
 			
 			model.endUpdate();
-		
+		*/
 			logger.setProgress( 1d );
 			logger.setStatus( "" );
 			final long end = System.currentTimeMillis();
