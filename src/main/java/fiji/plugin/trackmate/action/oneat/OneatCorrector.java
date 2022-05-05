@@ -38,6 +38,8 @@ public class OneatCorrector implements TrackCorrector {
 	private final boolean createlinks;
 	
 	private final boolean breaklinks;
+	
+	private final double[] calibration;
 
 	private SpotCollection divisionspots;
 
@@ -77,7 +79,7 @@ public class OneatCorrector implements TrackCorrector {
 			final int detectionchannel,
 			final double linkingdistance,
 			final boolean createlinks, 
-			final boolean breaklinks, final Model model,
+			final boolean breaklinks, final Model model, double[] calibration,
 			Map<String, Object> settings, final Logger logger) {
 
 		this.oneatdivision = oneatdivision;
@@ -105,7 +107,7 @@ public class OneatCorrector implements TrackCorrector {
 		
 		this.logger = logger;
 		
-		
+		this.calibration = calibration;
 		
 		setNumThreads();
 
@@ -126,7 +128,6 @@ public class OneatCorrector implements TrackCorrector {
 
 		
 		final long start = System.currentTimeMillis();
-		
 		divisionspots = new SpotCollection();
 		divisionframespots = new HashMap<Integer, ArrayList<Spot>>();
 
@@ -134,7 +135,7 @@ public class OneatCorrector implements TrackCorrector {
 		apoptosisframespots = new HashMap<Integer, ArrayList<Spot>>();
         int ndims = img.numDimensions() - 1;
 		Pair<  Pair<SpotCollection, HashMap<Integer, ArrayList<Spot>>>, Pair<SpotCollection, HashMap<Integer, ArrayList<Spot>>>> result = TrackCorrectorRunner.run(
-				oneatdivision, oneatapoptosis, ndims);
+				oneatdivision, oneatapoptosis, ndims, calibration);
 		//Oneat found spots for mitosis
 		divisionspots = result.getA().getA();
 		divisionframespots = result.getA().getB();

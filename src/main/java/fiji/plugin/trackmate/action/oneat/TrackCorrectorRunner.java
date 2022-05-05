@@ -60,6 +60,10 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_MAX_FRA
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_MAX_DISTANCE;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_GAP_CLOSING;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_MERGING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_CUTOFF_PERCENTILE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALTERNATIVE_LINKING_COST_FACTOR;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_MAX_DISTANCE; 
 
 public class TrackCorrectorRunner {
 
@@ -127,6 +131,10 @@ public class TrackCorrectorRunner {
 			cmsettings.put(KEY_GAP_CLOSING_MAX_FRAME_GAP, settings.get(KEY_GAP_CLOSING_MAX_FRAME_GAP));
 			cmsettings.put(KEY_ALLOW_GAP_CLOSING, true);
 			cmsettings.put(KEY_ALLOW_TRACK_MERGING, false);
+			cmsettings.put(KEY_CUTOFF_PERCENTILE, 0.9d);
+			cmsettings.put(KEY_ALTERNATIVE_LINKING_COST_FACTOR, 1.05d);
+			cmsettings.put(KEY_GAP_CLOSING_MAX_DISTANCE, settings.get(KEY_SPLITTING_MAX_DISTANCE));
+			cmsettings.put(KEY_MERGING_MAX_DISTANCE, 0d);
 			
 			logger.log("Creating mitosis links.\n");
 			// Lets take care of mitosis
@@ -160,11 +168,14 @@ public class TrackCorrectorRunner {
 						Creategraph(rootspots, graph);
 						for(Spot regionalspot: regionspots.iterable(false)) {
 							
+							if (regionalspot!=null) {
 							// ALl the candidates for segment linking
+							System.out.println(regionalspot.ID());	
 							GraphIterator<Spot, DefaultWeightedEdge> regionspotiterator = 
 									trackmodel.getDepthFirstIterator(regionalspot, true);
 							Set<Spot> regionalspots = Gettrackspots(regionspotiterator);
 							Creategraph(regionalspots, graph);
+						}
 						}
 						// Create the local graph in this region and create the cost matrix to find
 						// local links
@@ -613,7 +624,7 @@ public class TrackCorrectorRunner {
 	}
 
 	public static Pair<Pair<SpotCollection, HashMap<Integer, ArrayList<Spot>>>, Pair<SpotCollection, HashMap<Integer, ArrayList<Spot>>>> run(
-			final File oneatdivisionfile, final File oneatapoptosisfile, final int ndims) {
+			final File oneatdivisionfile, final File oneatapoptosisfile, final int ndims,final double[] calibration) {
 
 		SpotCollection divisionspots = new SpotCollection();
 		HashMap<Integer, ArrayList<Spot>> DivisionSpotListFrame = new HashMap<Integer, ArrayList<Spot>>();
@@ -635,9 +646,9 @@ public class TrackCorrectorRunner {
 					if (count > 0) {
 
 						int time = (int) Double.parseDouble(divisionspotsfile[0]);
-						double Z = Double.parseDouble(divisionspotsfile[1]);
-						double Y = Double.parseDouble(divisionspotsfile[2]);
-						double X = Double.parseDouble(divisionspotsfile[3]);
+						double Z = Double.parseDouble(divisionspotsfile[1]) * calibration[ 2 ];
+						double Y = Double.parseDouble(divisionspotsfile[2]) * calibration[ 1 ];
+						double X = Double.parseDouble(divisionspotsfile[3]) * calibration[ 0 ];
 						double score = Double.parseDouble(divisionspotsfile[4]);
 						double size = Double.parseDouble(divisionspotsfile[5]);
 						double confidence = Double.parseDouble(divisionspotsfile[6]);
@@ -717,9 +728,9 @@ public class TrackCorrectorRunner {
 					if (count > 0) {
 
 						int time = Integer.parseInt(apoptosisspotsfile[0]);
-						double Z = Double.parseDouble(apoptosisspotsfile[1]);
-						double Y = Double.parseDouble(apoptosisspotsfile[2]);
-						double X = Double.parseDouble(apoptosisspotsfile[3]);
+						double Z = Double.parseDouble(apoptosisspotsfile[1]) * calibration[ 2 ];
+						double Y = Double.parseDouble(apoptosisspotsfile[2]) * calibration[ 1 ];
+						double X = Double.parseDouble(apoptosisspotsfile[3]) * calibration[ 0 ];
 						double score = Double.parseDouble(apoptosisspotsfile[4]);
 						double size = Double.parseDouble(apoptosisspotsfile[5]);
 						double confidence = Double.parseDouble(apoptosisspotsfile[6]);

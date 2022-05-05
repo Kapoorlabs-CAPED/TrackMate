@@ -82,7 +82,10 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 		Map<String, Object> detectorsettings = settings.detectorSettings;
 		Model model = trackmate.getModel();
 		final ImgPlus<T> img = TMUtils.rawWraps( settings.imp );
-		
+		final double[] calibration = new double[ 3 ];
+		calibration[ 0 ] = trackmate.getSettings().dx;
+		calibration[ 1 ] = trackmate.getSettings().dy;
+		calibration[ 2 ] = trackmate.getSettings().dz;
 		if (gui!=null)
 		{
 			
@@ -125,7 +128,7 @@ public class  OneatExporterAction < T extends RealType< T > & NativeType< T > > 
 						.setImages( Views.zeroMin( detectionimg ), intimg )
 						.multiThreaded( false )
 						.forEachPixel( ( i, o ) -> o.setReal( i.getRealDouble() ) );
-			OneatCorrector oneatcorrector = corrector.create(intimg, model, mapsettings, logger);
+			OneatCorrector oneatcorrector = corrector.create(intimg, model, mapsettings, logger, calibration );
 			oneatcorrector.checkInput();
 			oneatcorrector.process();
 		}
