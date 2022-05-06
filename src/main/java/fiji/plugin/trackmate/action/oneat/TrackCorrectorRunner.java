@@ -103,6 +103,7 @@ public class TrackCorrectorRunner {
 						final DefaultWeightedEdge newedge = graph.addEdge(source, target);
 						graph.setEdgeWeight(newedge, graph.getEdgeWeight(newedge));
 
+						
 					}
 
 				}
@@ -157,129 +158,50 @@ public class TrackCorrectorRunner {
 			cmsettings.put(KEY_GAP_CLOSING_MAX_DISTANCE, settings.get(KEY_SPLITTING_MAX_DISTANCE));
 			cmsettings.put(KEY_MERGING_MAX_DISTANCE, 0d);
 
-			logger.log("Creating mitosis links.\n");
+			logger.log("Removing mitotic edges.\n");
 			// Lets take care of mitosis
 			if (Mitosisspots != null)
+				
+
 				for (Map.Entry<Integer, Pair<Spot, ArrayList<Spot>>> trackidspots : Mitosisspots.entrySet()) {
 
+					logger.setProgress((float) (count) / Mitosisspots.size());
 					// Get the current trackID
 					int trackID = trackidspots.getKey();
+					Set<DefaultWeightedEdge> dividingtracks = trackmodel.trackEdges(trackID);
 					// List of all the mother cells and the root of the lineage tree
 					Pair<Spot, ArrayList<Spot>> trackspots = trackidspots.getValue();
-					Spot rootspot = trackspots.getA();
+					
+					ArrayList<Spot> mitosismotherspots = trackspots.getB();
 					count++;
-					for (Spot motherspot : trackspots.getB()) {
-
-						System.out.println("Root" + rootspot.getFeature(FRAME) + " " + rootspot.ID() + " " + trackID
-								+ " " + rootspot.getFeature(POSITION_X) + " " + rootspot.getFeature(POSITION_Y) + " "
-								+ rootspot.getFeature(POSITION_Z));
-
-						System.out.println("Mother" + motherspot.getFeature(FRAME) + " " + motherspot.ID() + " "
-								+ motherspot.getFeature(POSITION_X) + " " + motherspot.getFeature(POSITION_Y) + " "
-								+ motherspot.getFeature(POSITION_Z));
-
+					
+					//Remove edges corresponding to mitotic trajectories
+					for (final DefaultWeightedEdge edge : dividingtracks) {
+						
+						final Spot source = trackmodel.getEdgeSource(edge);
+						
+						if(mitosismotherspots.contains(source)) {
+							
+							graph.removeEdge(edge);
+							
+							
+						}
+						
 					}
+				
 
 				}
 
 		}
-
-		/*
-		 * for (Spot motherspot : trackspots.getA()) {
-		 * 
-		 * int currentframe = motherspot.getFeature(FRAME).intValue(); // Get all the
-		 * spots in the next frame in the local region SpotCollection regionspots =
-		 * regionspot(allspots, motherspot, currentframe + 1, searchdistance);
-		 * 
-		 * // Set of spots in mother track
-		 * 
-		 * GraphIterator<Spot, DefaultWeightedEdge> rootiterator =
-		 * trackmodel.getDepthFirstIterator(rootspot, true); Set<Spot> rootspots =
-		 * Gettrackspots(rootiterator); GraphIterator<Spot, DefaultWeightedEdge>
-		 * motheriterator = trackmodel.getDepthFirstIterator(motherspot, true);
-		 * Set<Spot> motherspots = Gettrackspots(motheriterator); //Exclude mother spots
-		 * from rootspots System.out.println("size root" + rootspots.size() + " " +
-		 * rootspots.iterator().next().ID()); System.out.println("size mother" +
-		 * motherspots.size() + " " + motherspots.iterator().next().ID());
-		 * rootspots.removeAll(motherspots); rootspots.add(motherspot);
-		 * System.out.println("size root - mother" + rootspots.size() + " " +
-		 * motherspot.ID()); //Create a graph from the rootspots Creategraph(rootspots,
-		 * graph); for(Spot regionalspot: regionspots.iterable(false)) {
-		 * 
-		 * if (regionalspot!=null) { // ALl the candidates for segment linking
-		 * GraphIterator<Spot, DefaultWeightedEdge> regionspotiterator =
-		 * trackmodel.getDepthFirstIterator(regionalspot, true); Set<Spot> regionalspots
-		 * = Gettrackspots(regionspotiterator); Creategraph(regionalspots, graph); } }
-		 * // Create the local graph in this region and create the cost matrix to find
-		 * // local links
-		 * 
-		 * logger.setStatus("Creating the segment linking cost matrix..."); final
-		 * JaqamanSegmentCostMatrixCreator costMatrixCreator = new
-		 * JaqamanSegmentCostMatrixCreator( graph, cmsettings);
-		 * 
-		 * costMatrixCreator.setNumThreads(numThreads); final SlaveLogger jlLogger = new
-		 * SlaveLogger( logger, 0, 0.9 ); final JaqamanLinker< Spot, Spot > linker = new
-		 * JaqamanLinker<>( costMatrixCreator, jlLogger ); if ( !linker.checkInput() ||
-		 * !linker.process() ) { System.out.println(linker.getErrorMessage()); return
-		 * null; }
-		 * 
-		 * 
-		 * 
-		 * 
-		 * logger.setProgress( 0.9d ); logger.setStatus( "Creating links..." );
-		 * 
-		 * final Map< Spot, Spot > assignment = linker.getResult(); final Map< Spot,
-		 * Double > costs = linker.getAssignmentCosts();
-		 * 
-		 * for ( final Spot source : assignment.keySet() ) { final Spot target =
-		 * assignment.get( source ); final DefaultWeightedEdge edge = graph.addEdge(
-		 * source, target );
-		 * 
-		 * final double cost = costs.get( source ); graph.setEdgeWeight( edge, cost ); }
-		 * 
-		 * } } } /* // Lets take care of no event tracks
-		 * AlltrackIDs.removeAll(ApoptosisIDs); AlltrackIDs.removeAll(MitosisIDs);
-		 * 
-		 * for (int trackID : AlltrackIDs) {
-		 * 
-		 * // Nothing special here just mantaining the normal links found
-		 * Set<DefaultWeightedEdge> normaltracks = trackmodel.trackEdges(trackID); for
-		 * (final DefaultWeightedEdge edge : normaltracks) { final Spot source =
-		 * trackmodel.getEdgeSource(edge); final Spot target =
-		 * trackmodel.getEdgeTarget(edge); graph.addVertex(source);
-		 * graph.addVertex(target); if(graph.getEdge(source, target) == null) { final
-		 * DefaultWeightedEdge newedge = graph.addEdge(source, target);
-		 * graph.setEdgeWeight(newedge, -1); }
-		 * 
-		 * }
-		 * 
-		 * }
-		 */
+		logger.setProgress( 1d );
+		logger.flush();
+		logger.log("Done, please review the TrackScheme by going back.\n");
+	
 		return graph;
 
 	}
 
-	private static void Creategraph(Set<Spot> spots, SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 
-		Iterator<Spot> spotiterator = spots.iterator();
-
-		while (spotiterator.hasNext()) {
-
-			Spot source = spotiterator.next();
-
-			if (spotiterator.hasNext()) {
-				Spot target = spotiterator.next();
-
-				graph.addVertex(source);
-				graph.addVertex(target);
-				if (graph.getEdge(source, target) == null) {
-					final DefaultWeightedEdge newedge = graph.addEdge(source, target);
-					graph.setEdgeWeight(newedge, -1);
-				}
-			}
-
-		}
-	}
 
 	private static Set<Spot> Gettrackspots(GraphIterator<Spot, DefaultWeightedEdge> iterator) {
 
@@ -690,6 +612,7 @@ public class TrackCorrectorRunner {
 		HashMap<Integer, ArrayList<Spot>> DivisionSpotListFrame = new HashMap<Integer, ArrayList<Spot>>();
 
 		double probthreshold = (double) settings.get(KEY_PROB_THRESHOLD);
+		
 		if (oneatdivisionfile != null) {
 			String line = "";
 			String cvsSplitBy = ",";
@@ -715,6 +638,7 @@ public class TrackCorrectorRunner {
 						double confidence = Double.parseDouble(divisionspotsfile[6]);
 						double angle = Double.parseDouble(divisionspotsfile[7]);
 
+						
 						if (score >= probthreshold) {
 						Oneatobject Spot = new Oneatobject(time, Z, Y, X, score, size, confidence, angle);
 
@@ -725,8 +649,9 @@ public class TrackCorrectorRunner {
 							DivisionMap.put(time, DivisionSpots);
 						DivisionSpots.add(Spot);
 					}
-					count = count + 1;
+				
 				}
+					count = count + 1;
 			}
 			}
 			catch (IOException ie) {
@@ -807,8 +732,9 @@ public class TrackCorrectorRunner {
 							ApoptosisMap.put(time, ApoptosisSpots);
 						ApoptosisSpots.add(Spot);
 					}
-					count = count + 1;
+					
 				}
+					count = count + 1;
 			}
 			}
 			catch (IOException ie) {
