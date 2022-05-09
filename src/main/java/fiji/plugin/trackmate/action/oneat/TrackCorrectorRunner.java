@@ -173,7 +173,7 @@ public class TrackCorrectorRunner {
 					// Get the current trackID
 					int trackID = trackidspots.getKey();
 					Set<DefaultWeightedEdge> dividingtracks = trackmodel.trackEdges(trackID);
-					
+					MitosisIDs.add(trackID);
 					
 					// List of all the mother cells and the root of the lineage tree
 					Pair<Spot, ArrayList<Spot>> trackspots = trackidspots.getValue();
@@ -258,7 +258,7 @@ public class TrackCorrectorRunner {
 					 * Create links in graph.
 					 */
 
-					logger.setProgress( trackcount/ MitosisIDs.size());
+					logger.setProgress( trackcount/ (Mitosisspots.size() + 1));
 					logger.setStatus( "Creating the segment linking cost matrix..." );
                     trackcount++;
 					final Map< Spot, Spot > assignment = linker.getResult();
@@ -270,6 +270,9 @@ public class TrackCorrectorRunner {
 						final DefaultWeightedEdge edge = graph.addEdge( source, target );
 
 						final double cost = costs.get( source );
+						System.out.println(cost + " " + source.getDoublePosition(0) +  " " +
+						source.getDoublePosition(1) + " " + source.getDoublePosition(2) );
+						
 						graph.setEdgeWeight( edge, cost );
 					}
 
@@ -338,7 +341,7 @@ public class TrackCorrectorRunner {
 			count++;
 			for (Spot spot : trackspots) {
 
-				logger.setProgress((float) (count) / AllTrackIds.size());
+				logger.setProgress((float) (count) / (AllTrackIds.size() + 1));
 
 				int frame = spot.getFeature(FRAME).intValue();
 				if (frame < intimg.dimension(ndim) - 1) {
