@@ -79,7 +79,7 @@ public class TrackCorrectorRunner {
 	double timecutoff = 0;
 	TrackModel trackModel = model.getTrackModel();
 	if (settings.get(KEY_TRACKLET_LENGTH) != null)
-		timecutoff = (Double) settings.get(KEY_TRACKLET_LENGTH);
+		timecutoff = (Integer) settings.get(KEY_TRACKLET_LENGTH);
 
 
 	for (final Integer trackID : trackModel.trackIDs(false)) {
