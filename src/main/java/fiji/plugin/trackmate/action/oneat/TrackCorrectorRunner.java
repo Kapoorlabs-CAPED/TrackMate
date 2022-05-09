@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.traverse.BreadthFirstIterator;
 import org.jgrapht.traverse.GraphIterator;
 import org.scijava.Context;
 import org.scijava.app.StatusService;
@@ -54,6 +55,7 @@ import static fiji.plugin.trackmate.Spot.RADIUS;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_BREAK_LINKS;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_CREATE_LINKS;
 import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_PROB_THRESHOLD;
+import static fiji.plugin.trackmate.action.oneat.OneatCorrectorFactory.KEY_TRACKLET_LENGTH;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import static fiji.plugin.trackmate.Spot.QUALITY;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_SPLITTING;
@@ -69,7 +71,143 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_MAX_DISTANC
 public class TrackCorrectorRunner {
 
 	private final static Context context = TMUtils.getContext();
+	
+	
+	private static SimpleWeightedGraph<Spot, DefaultWeightedEdge> removeTracklets(final Model model,
+			final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph,
+			final Map<String, Object> settings) {
+	double timecutoff = 0;
+	TrackModel trackModel = model.getTrackModel();
+	if (settings.get(KEY_TRACKLET_LENGTH) != null)
+		timecutoff = (Double) settings.get(KEY_TRACKLET_LENGTH);
 
+
+	for (final Integer trackID : trackModel.trackIDs(false)) {
+
+		ArrayList<Pair<Integer, Spot>> Sources = new ArrayList<Pair<Integer, Spot>>();
+		ArrayList<Pair<Integer, Spot>> Targets = new ArrayList<Pair<Integer, Spot>>();
+		ArrayList<Integer> SourcesID = new ArrayList<Integer>();
+		ArrayList<Integer> TargetsID = new ArrayList<Integer>();
+		ArrayList<Pair<Integer, Spot>> Starts = new ArrayList<Pair<Integer, Spot>>();
+		ArrayList<Pair<Integer, Spot>> Ends = new ArrayList<Pair<Integer, Spot>>();
+		HashSet<Pair<Integer, Spot>> Splits = new HashSet<Pair<Integer, Spot>>();
+
+		final Set<DefaultWeightedEdge> track = trackModel.trackEdges(trackID);
+
+		for (final DefaultWeightedEdge e : track) {
+
+			Spot Spotbase = model.getTrackModel().getEdgeSource(e);
+			Spot Spottarget = model.getTrackModel().getEdgeTarget(e);
+
+			Integer targetID = Spottarget.ID();
+			Integer sourceID = Spotbase.ID();
+			Sources.add(new ValuePair<Integer, Spot>(sourceID, Spotbase));
+			Targets.add(new ValuePair<Integer, Spot>(targetID, Spottarget));
+			SourcesID.add(sourceID);
+			TargetsID.add(targetID);
+
+		}
+		// find track ends
+		for (Pair<Integer, Spot> tid : Targets) {
+
+			if (!SourcesID.contains(tid.getA())) {
+
+				Ends.add(tid);
+
+			}
+
+		}
+
+		// find track starts
+		for (Pair<Integer, Spot> sid : Sources) {
+
+			if (!TargetsID.contains(sid.getA())) {
+
+				Starts.add(sid);
+
+			}
+
+		}
+
+		// find track splits
+		int scount = 0;
+		for (Pair<Integer, Spot> sid : Sources) {
+
+			for (Pair<Integer, Spot> dupsid : Sources) {
+
+				if (dupsid.getA().intValue() == sid.getA().intValue()) {
+					scount++;
+				}
+			}
+			if (scount > 1) {
+				Splits.add(sid);
+			}
+			scount = 0;
+		}
+
+		if (Splits.size() > 0) {
+
+			for (Pair<Integer, Spot> sid : Ends) {
+
+				Spot Spotend = sid.getB();
+
+				int trackletlength = 0;
+
+				double minsize = Double.MAX_VALUE;
+				Spot Actualsplit = null;
+				for (Pair<Integer, Spot> splitid : Splits) {
+					Spot Spotstart = splitid.getB();
+					Set<Spot> spotset = connectedSetOf(graph, Spotend, Spotstart);
+
+					if (spotset.size() < minsize) {
+
+						minsize = spotset.size();
+						Actualsplit = Spotstart;
+
+					}
+
+				}
+
+				if (Actualsplit != null) {
+					Set<Spot> connectedspotset = connectedSetOf(graph, Spotend, Actualsplit);
+					trackletlength = (int) Math.abs(Actualsplit.diffTo(Spotend, Spot.FRAME));
+
+					if (trackletlength <= timecutoff) {
+
+						Iterator<Spot> it = connectedspotset.iterator();
+						while (it.hasNext())
+							graph.removeVertex(it.next());
+
+					}
+				}
+
+			}
+		}
+	}
+
+return graph;
+
+}
+
+private static Set<Spot> connectedSetOf(SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, Spot vertex, Spot split) {
+
+	Set<Spot> connectedSet = new HashSet<>();
+
+	connectedSet = new HashSet<>();
+
+	BreadthFirstIterator<Spot, DefaultWeightedEdge> i = new BreadthFirstIterator<>(graph, vertex);
+
+	do {
+		Spot spot = i.next();
+		if (spot.ID() == split.ID()) {
+			break;
+
+		}
+		connectedSet.add(spot);
+	} while (i.hasNext());
+
+	return connectedSet;
+}
 	public static SimpleWeightedGraph<Spot, DefaultWeightedEdge> getCorrectedTracks(final Model model,
 			HashMap<Integer, Pair<Spot, ArrayList<Spot>>> Mitosisspots,
 			HashMap<Integer, Pair<Spot, Spot>> Apoptosisspots, Map<String, Object> settings, final int ndim,
@@ -217,6 +355,7 @@ public class TrackCorrectorRunner {
 						
 						
 						SpotCollection regionspots =  regionspot(allspots,motherspot, (int) frame, searchdistance);
+						if(regionspots.getNSpots((int)frame, false) > 0)
 					    for(Spot spot : regionspots.iterable((int)frame, false)) {
 					    
 					    	int regiontrackID = trackmodel.trackIDOf(spot);
@@ -259,7 +398,7 @@ public class TrackCorrectorRunner {
 					 */
 
 					logger.setProgress( trackcount/ (Mitosisspots.size() + 1));
-					logger.setStatus( "Creating the segment linking cost matrix..." );
+					
                     trackcount++;
 					final Map< Spot, Spot > assignment = linker.getResult();
 					final Map< Spot, Double > costs = linker.getAssignmentCosts();
@@ -270,7 +409,7 @@ public class TrackCorrectorRunner {
 						final DefaultWeightedEdge edge = graph.addEdge( source, target );
 
 						final double cost = costs.get( source );
-						System.out.println(cost + " " + source.getDoublePosition(0) +  " " +
+						System.out.println("linking cost" + cost + " " + source.getDoublePosition(0) +  " " +
 						source.getDoublePosition(1) + " " + source.getDoublePosition(2) );
 						
 						graph.setEdgeWeight( edge, cost );
@@ -291,6 +430,8 @@ public class TrackCorrectorRunner {
 		logger.flush();
 		logger.log("Done, please review the TrackScheme by going back.\n");
 	
+		graph = removeTracklets(model, graph, settings);
+		
 		return graph;
 
 	}
