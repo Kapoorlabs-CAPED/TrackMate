@@ -160,21 +160,27 @@ public class TrackCorrectorRunner {
 
 			logger.log("Removing mitotic edges.\n");
 			// Lets take care of mitosis
-			if (Mitosisspots != null)
+			if (Mitosisspots != null) {
 				
 
+				int trackcount = 0;
 				for (Map.Entry<Integer, Pair<Spot, ArrayList<Spot>>> trackidspots : Mitosisspots.entrySet()) {
 
+					SimpleWeightedGraph<Spot, DefaultWeightedEdge> localgraph 
+					= new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+					
 					logger.setProgress((float) (count) / Mitosisspots.size());
 					// Get the current trackID
 					int trackID = trackidspots.getKey();
 					Set<DefaultWeightedEdge> dividingtracks = trackmodel.trackEdges(trackID);
+					
+					
 					// List of all the mother cells and the root of the lineage tree
 					Pair<Spot, ArrayList<Spot>> trackspots = trackidspots.getValue();
 					
 					ArrayList<Spot> mitosismotherspots = trackspots.getB();
 					count++;
-					
+					ArrayList<DefaultWeightedEdge> prunededges = new ArrayList<DefaultWeightedEdge>();
 					//Remove edges corresponding to mitotic trajectories
 					for (final DefaultWeightedEdge edge : dividingtracks) {
 						
@@ -183,14 +189,99 @@ public class TrackCorrectorRunner {
 						if(mitosismotherspots.contains(source)) {
 							
 							graph.removeEdge(edge);
-							
-							
+							prunededges.add(edge);
 						}
 						
 					}
-				
+					dividingtracks.removeAll(prunededges);
+					
+					for(DefaultWeightedEdge localedge: dividingtracks) {
+						
+						final Spot source = trackmodel.getEdgeSource(localedge);
+						final Spot target = trackmodel.getEdgeTarget(localedge);
+						final double linkcost = trackmodel.getEdgeWeight(localedge);
+						localgraph.addVertex(source);
+						localgraph.addVertex(target);
+						localgraph.addEdge(source, target);
+						localgraph.setEdgeWeight(localedge, linkcost);
+						
+						
+					}
+					
+					for(Spot motherspot : mitosismotherspots ) {
+					
+						
+						for(int i = 1; i < tmoneatdeltat /2; ++i) {
+					
+							double frame = motherspot.getFeature(FRAME) + i;
+						
+						
+						SpotCollection regionspots =  regionspot(allspots,motherspot, (int) frame, searchdistance);
+					    for(Spot spot : regionspots.iterable((int)frame, false)) {
+					    
+					    	int regiontrackID = trackmodel.trackIDOf(spot);
+					    	Set<DefaultWeightedEdge> localtracks = trackmodel.trackEdges(regiontrackID);
+					    	
+					    	for(DefaultWeightedEdge localedge: localtracks) {
+								
+								final Spot source = trackmodel.getEdgeSource(localedge);
+								final Spot target = trackmodel.getEdgeTarget(localedge);
+								final double linkcost = trackmodel.getEdgeWeight(localedge);
+								localgraph.addVertex(source);
+								localgraph.addVertex(target);
+								localgraph.addEdge(source, target);
+								localgraph.setEdgeWeight(localedge, linkcost);
+								
+								
+							}
+					    	
+					    
+					    }
+					
+					}
+						
+					}
+					
+					
+					
+					final JaqamanSegmentCostMatrixCreator costMatrixCreator = new JaqamanSegmentCostMatrixCreator( graph, cmsettings );
+					costMatrixCreator.setNumThreads( numThreads );
+					final SlaveLogger jlLogger = new SlaveLogger( logger, 0, 0.9 );
+					final JaqamanLinker< Spot, Spot > linker = new JaqamanLinker<>( costMatrixCreator, jlLogger );
+					if ( !linker.checkInput() || !linker.process() )
+					{
+						System.out.println(linker.getErrorMessage());
+					}
+
+
+					/*
+					 * Create links in graph.
+					 */
+
+					logger.setProgress( trackcount/ MitosisIDs.size());
+					logger.setStatus( "Creating the segment linking cost matrix..." );
+                    trackcount++;
+					final Map< Spot, Spot > assignment = linker.getResult();
+					final Map< Spot, Double > costs = linker.getAssignmentCosts();
+					//Recreate new links
+					for ( final Spot source : assignment.keySet() )
+					{
+						final Spot target = assignment.get( source );
+						final DefaultWeightedEdge edge = graph.addEdge( source, target );
+
+						final double cost = costs.get( source );
+						graph.setEdgeWeight( edge, cost );
+					}
+
 
 				}
+				
+				
+				
+			}
+			
+		
+			
 
 		}
 		logger.setProgress( 1d );
@@ -203,19 +294,7 @@ public class TrackCorrectorRunner {
 
 
 
-	private static Set<Spot> Gettrackspots(GraphIterator<Spot, DefaultWeightedEdge> iterator) {
 
-		Set<Spot> spots = new HashSet<Spot>();
-		while (iterator.hasNext()) {
-
-			Spot spot = iterator.next();
-			spots.add(spot);
-
-		}
-
-		return spots;
-
-	}
 
 	private static SpotCollection regionspot(SpotCollection allspots, Spot motherspot, int frame, double region) {
 
