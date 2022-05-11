@@ -180,8 +180,8 @@ public class OneatCorrector implements TrackCorrector {
         }
         
         }
-        
-			graph = TrackCorrectorRunner.getCorrectedTracks(model, Mitossisspots, Apoptosisspots, settings, ndims, logger, numThreads); 	
+			graph = TrackCorrectorRunner.getCorrectedTracks(model, Mitossisspots, Apoptosisspots, settings, ndims, logger, numThreads,
+					img,divisionframespots, calibration ); 	
 			
 			
 			 //Check that the objects list itself isn't null

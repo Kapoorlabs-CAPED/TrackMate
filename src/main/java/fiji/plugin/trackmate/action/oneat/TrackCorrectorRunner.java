@@ -215,7 +215,8 @@ public class TrackCorrectorRunner {
 	public static SimpleWeightedGraph<Spot, DefaultWeightedEdge> getCorrectedTracks(final Model model,
 			HashMap<Integer, Pair<Spot, ArrayList<Spot>>> Mitosisspots,
 			HashMap<Integer, Pair<Spot, Spot>> Apoptosisspots, Map<String, Object> settings, final int ndim,
-			final Logger logger, int numThreads) {
+			final Logger logger, int numThreads,final ImgPlus<IntType> intimg, HashMap<Integer, ArrayList<Spot>> framespots,
+			 double[] calibration) {
 
 		// Get the trackmodel and spots in the default tracking result and start to
 		// create a new graph
@@ -250,7 +251,11 @@ public class TrackCorrectorRunner {
 
 				}
 				
-		
+				if (breaklinks) {
+					
+					 graph = BreakLinksTrack(model, framespots,  intimg, logger, graph,calibration,tmoneatdeltat); 
+				}
+				
 		int count = 0;
 		if (Apoptosisspots != null) {
 
@@ -286,7 +291,12 @@ public class TrackCorrectorRunner {
 
 		}
 
+		
+		
 		count = 0;
+		
+		
+		
 		if (createlinks) {
 			Map<String, Object> cmsettings = new HashMap<>();
 			// Gap closing.
@@ -712,6 +722,104 @@ public class TrackCorrectorRunner {
 		logger.setProgress(0.);
 
 		return Trackmitosis;
+	}
+	
+	private static SimpleWeightedGraph<Spot, DefaultWeightedEdge> BreakLinksTrack(final Model model, HashMap<Integer, ArrayList<Spot>>  framespots, 
+			final ImgPlus<IntType> intimg, final Logger logger,final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph,
+			double[] calibration, int N) {
+		
+		int count = 0;
+		logger.log("Breaking links not found by oneat.\n");
+		Pair<HashMap<Integer, Pair<Integer, Spot>>, HashMap<Integer, ArrayList<Pair<Integer, Spot>>>> DividingStartspots = getTMDividing(
+				model);
+		
+		HashMap<Integer, ArrayList<Pair<Integer, Spot>>> Dividingspotlocations  = DividingStartspots.getB();
+		int ndim = intimg.numDimensions() - 1;
+		
+		HashMap<Pair<Integer, Integer>, Pair<Spot, Integer>> uniquelabelID = new HashMap<Pair<Integer, Integer>, Pair<Spot, Integer>>();
+		RandomAccess<IntType> ranac = intimg.randomAccess();
+		Set<Integer> AllTrackIds = model.getTrackModel().trackIDs(false);
+		
+		
+		for (int trackID : AllTrackIds) {
+
+			Set<Spot> trackspots = model.getTrackModel().trackSpots(trackID);
+		
+			for (Spot spot : trackspots) {
+
+				
+
+				int frame = spot.getFeature(FRAME).intValue();
+				if (frame < intimg.dimension(ndim) - 1) {
+					long[] location = new long[ndim];
+					for (int d = 0; d < ndim; ++d) {
+						location[d] = (long) (spot.getDoublePosition(d) / calibration[d]);
+						ranac.setPosition(location[d], d);
+					}
+
+					ranac.setPosition(frame, ndim);
+					int label = ranac.get().get();
+
+					uniquelabelID.put(new ValuePair<Integer, Integer>(label, frame),
+							new ValuePair<Spot, Integer>(spot, trackID));
+
+				}
+			}
+		}
+		
+		
+		for (Map.Entry<Integer, ArrayList<Spot>> framemap : framespots.entrySet()) {
+
+			int frame = framemap.getKey();
+			if (frame < intimg.dimension(ndim) - 1) {
+				count++;
+
+				ArrayList<Spot> spotlist = framemap.getValue();
+
+				for (Spot currentspots : spotlist) {
+
+					logger.setProgress((float) (count) / framespots.size());
+
+					long[] location = new long[ndim];
+					for (int d = 0; d < ndim; ++d) {
+						location[d] = (long) (currentspots.getDoublePosition(d) / calibration[d]);
+						ranac.setPosition(location[d], d);
+					}
+					ranac.setPosition(frame, ndim);
+					// Get the label ID of the current interesting spot
+					int labelID = ranac.get().get();
+
+					if (uniquelabelID.containsKey(new ValuePair<Integer, Integer>(labelID, frame))) {
+						Pair<Spot, Integer> spotandtrackID = uniquelabelID
+								.get(new ValuePair<Integer, Integer>(labelID, frame));
+						// Now get the spot ID
+
+						Spot spot = spotandtrackID.getA();
+						Spot closestSpot = null;
+						int trackID = spotandtrackID.getB();
+						Pair<Double, Spot> closestspotpair = closestSpot(spot, Dividingspotlocations.get(trackID));
+						double closestdistance = closestspotpair.getA();
+						closestSpot = closestspotpair.getB();
+						// There could be a N frame gap at most between the TM detected dividing spot
+						// location and oneat found spot location
+						if (closestdistance > N && closestSpot!=null) {
+							
+							Set<DefaultWeightedEdge> e = model.getTrackModel().edgesOf(closestSpot);
+							
+							for(DefaultWeightedEdge edge : e)
+							    graph.removeEdge(edge);
+							
+							
+						}
+					}
+					
+				}
+				
+			}
+			
+		}
+		return graph;
+		
 	}
 
 	private static Pair<Boolean, Pair<Spot, Spot>> isDividingTrack(final Spot spot, final int trackID, final int N,
