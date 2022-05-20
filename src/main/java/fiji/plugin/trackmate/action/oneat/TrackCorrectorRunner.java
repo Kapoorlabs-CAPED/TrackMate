@@ -360,7 +360,18 @@ public class TrackCorrectorRunner {
 					ArrayList<Spot> mitosismotherspots = trackspots.getB();
 					count++;
 				
-			
+					//Remove edges corresponding to mitotic trajectories
+					for (final DefaultWeightedEdge edge : dividingtracks) {
+						
+						final Spot source = trackmodel.getEdgeSource(edge);
+						
+						if(mitosismotherspots.contains(source)) {
+							
+							graph.removeEdge(edge);
+							
+						}
+						
+					}
 					
 					for(DefaultWeightedEdge localedge: dividingtracks) {
 						
@@ -394,7 +405,10 @@ public class TrackCorrectorRunner {
 					    	
 					    	for(DefaultWeightedEdge localedge: localtracks) {
 								
+					    		
+					    		
 								final Spot source = trackmodel.getEdgeSource(localedge);
+								if(source.getFeature(FRAME) >= frame) {
 								final Spot target = trackmodel.getEdgeTarget(localedge);
 								final double linkcost = trackmodel.getEdgeWeight(localedge);
 								
@@ -404,7 +418,7 @@ public class TrackCorrectorRunner {
 								localgraph.addEdge(source, target);
 								localgraph.setEdgeWeight(localedge, linkcost);
 								
-								
+								}
 							}
 					    	
 					    	}
@@ -440,16 +454,23 @@ public class TrackCorrectorRunner {
 					for ( final Spot source : assignment.keySet() )
 					{
 						final Spot target = assignment.get( source );
-						if(graph.getEdge( source, target ) != null)
-							graph.removeEdge(source, target);
+						
+						Set<DefaultWeightedEdge> targetlinks = trackmodel.edgesOf(target);
+						// Remove the targetsource and target edge prior to assingment
+						for(DefaultWeightedEdge targetedge: targetlinks) {
+							
+							Spot targetsource = trackmodel.getEdgeSource(targetedge);
+							graph.removeEdge(targetsource, target);
+						}
+						
 						
 						final double cost = costs.get( source );
-							
+					    if(cost >= 10) {		
 						System.out.println(cost);
 						final DefaultWeightedEdge edge = graph.addEdge( source, target );
 						graph.setEdgeWeight( edge, cost );
 						
-						
+					    }
 					
 						
 					}
@@ -480,6 +501,8 @@ public class TrackCorrectorRunner {
 	private static SpotCollection regionspot(SpotCollection allspots, Spot motherspot, int frame, double region) {
 
 		SpotCollection regionspots = new SpotCollection();
+		final int Nspots = allspots.getNSpots(frame, false);
+		if (Nspots> 0)
 		for (Spot spot : allspots.iterable(frame, false)) {
 
 			if (motherspot.squareDistanceTo(spot) <= region * region) {
