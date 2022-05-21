@@ -336,8 +336,7 @@ public class TrackCorrectorRunner {
 				int trackcount = 0;
 				for (Map.Entry<Integer, Pair<Spot, ArrayList<Spot>>> trackidspots : Mitosisspots.entrySet()) {
 
-					SimpleWeightedGraph<Spot, DefaultWeightedEdge> localgraph = new SimpleWeightedGraph<>(
-							DefaultWeightedEdge.class);
+					
 
 					logger.setProgress((float) (count) / Mitosisspots.size());
 					// Get the current trackID
@@ -351,7 +350,10 @@ public class TrackCorrectorRunner {
 					count++;
 
 					
+				
+						
 					
+						
 					// Remove edges corresponding to mitotic trajectories
 					for (final DefaultWeightedEdge edge : dividingtracks) {
 
@@ -360,24 +362,31 @@ public class TrackCorrectorRunner {
 						if (mitosismotherspots.contains(source)) {
 
 							graph.removeEdge(edge);
-
 						}
 
 					}
 
-					for (DefaultWeightedEdge localedge : dividingtracks) {
-
-						final Spot source = trackmodel.getEdgeSource(localedge);
-						final Spot target = trackmodel.getEdgeTarget(localedge);
-						final double linkcost = trackmodel.getEdgeWeight(localedge);
-						localgraph.addVertex(source);
-						localgraph.addVertex(target);
-						localgraph.addEdge(source, target);
-						localgraph.setEdgeWeight(localedge, linkcost);
-
-					}
+					
 
 					for (Spot motherspot : mitosismotherspots) {
+						
+						Set<DefaultWeightedEdge> mothertrack = trackmodel.edgesOf(motherspot);
+						
+						SimpleWeightedGraph<Spot, DefaultWeightedEdge> localgraph = new SimpleWeightedGraph<>(
+								DefaultWeightedEdge.class);
+						for (DefaultWeightedEdge localedge : mothertrack) {
+
+							if(!graph.containsEdge(localedge)) {
+							final Spot source = trackmodel.getEdgeSource(localedge);
+							final Spot target = trackmodel.getEdgeTarget(localedge);
+							final double linkcost = trackmodel.getEdgeWeight(localedge);
+							localgraph.addVertex(source);
+							localgraph.addVertex(target);
+							localgraph.addEdge(source, target);
+							localgraph.setEdgeWeight(localedge, linkcost);
+
+						}
+						}
 
 						System.out.println("Mothers Time"+ " " + motherspot.getFeature(FRAME)); 
 						for (int i = 0; i < tmoneatdeltat; ++i) {
@@ -408,7 +417,6 @@ public class TrackCorrectorRunner {
 														localgraph.addVertex(target);
 														localgraph.addEdge(source, target);
 														localgraph.setEdgeWeight(localedge, linkcost);
-														System.out.println("Real Mother"+ " " + motherspot.getFeature(FRAME)); 
 													}
 												}
 
@@ -419,7 +427,7 @@ public class TrackCorrectorRunner {
 
 							}
 						}
-					}
+					
 
 					final OneatCostMatrix costMatrixCreator = new OneatCostMatrix(localgraph, cmsettings);
 					costMatrixCreator.setNumThreads(numThreads);
@@ -455,7 +463,7 @@ public class TrackCorrectorRunner {
 
 							final double cost = costs.get(source);
 
-							System.out.println("Linking cost oneat" + " " + cost);
+							System.out.println("Linking cost oneat" + " " + cost + " " + source.getFeature(FRAME));
 							final DefaultWeightedEdge edge = graph.addEdge(source, target);
 							if (edge != null)
 								graph.setEdgeWeight(edge, cost);
@@ -464,10 +472,15 @@ public class TrackCorrectorRunner {
 						}
 					
 
+					
+					
+					
 				}
 
+					
+					
 			}
-
+			}
 		}
 		logger.setProgress(1d);
 		logger.flush();
@@ -976,7 +989,7 @@ public class TrackCorrectorRunner {
 
 					if (count > 0) {
 
-						int time = (int) Double.parseDouble(divisionspotsfile[0]) - 1;
+						int time = (int) Double.parseDouble(divisionspotsfile[0]);
 						double Z = Double.parseDouble(divisionspotsfile[1]) * calibration[2];
 						double Y = Double.parseDouble(divisionspotsfile[2]) * calibration[1];
 						double X = Double.parseDouble(divisionspotsfile[3]) * calibration[0];
@@ -1059,7 +1072,7 @@ public class TrackCorrectorRunner {
 
 					if (count > 0) {
 
-						int time = Integer.parseInt(apoptosisspotsfile[0]) - 1;
+						int time = Integer.parseInt(apoptosisspotsfile[0]);
 						double Z = Double.parseDouble(apoptosisspotsfile[1]) * calibration[2];
 						double Y = Double.parseDouble(apoptosisspotsfile[2]) * calibration[1];
 						double X = Double.parseDouble(apoptosisspotsfile[3]) * calibration[0];
